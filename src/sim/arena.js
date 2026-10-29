@@ -1,12 +1,12 @@
 // A small world for the virtual robot: a rectangular arena with obstacles, in millimetres (x to the right, y up, the
 // heading in radians counter-clockwise from +x), and the robot in it: two wheels, a round body, seven proximity sensors.
 // The sensors follow a curve that looks like the real ones (about 4000 when touching, 3300 at 16 mm, nothing at 11 cm).
-import { SENSORS } from '../spec.js';
+import { SENSORS, SENSE_RANGE_MM } from '../spec.js';
 
 export const ROBOT_RADIUS = 55;
 export const WHEEL_BASE = 94;
 export const MM_PER_UNIT = 150 / 1.8 / 300;         // a wheel speed unit in mm/s (the factory 15 cm in 1.8 s at 300)
-export const SENSE_RANGE = 110;
+export const SENSE_RANGE = SENSE_RANGE_MM;
 
 // What a sensor reads at this distance (mm) from an obstacle straight in front of it.
 export function proxFromDistance(d) {

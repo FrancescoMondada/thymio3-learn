@@ -3,7 +3,7 @@
 // useSyncExternalStore (see useTelemetry in App.jsx) and Node can test it.
 import { DEFAULT_BASE, DEFAULT_FORGET, DEFAULT_STEP, emptyWeights } from './spec.js';
 
-export const KEEP_READINGS = 1200;        // 2 minutes of readings (10 a second)
+export const KEEP_READINGS = 9000;        // 15 minutes of readings (10 a second)
 export const KEEP_WEIGHTS = 3000;
 export const KEEP_EVENTS = 600;
 

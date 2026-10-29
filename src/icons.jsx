@@ -29,6 +29,9 @@ export const WarnIcon = (p) => <I {...p}><path d="M12 3.5L2.8 19.5h18.4z" /><pat
 export const ArrowUpIcon = (p) => <I {...p}><path d="M12 19V5M6 11l6-6 6 6" /></I>;
 export const ArrowDownIcon = (p) => <I {...p}><path d="M12 5v14M6 13l6 6 6-6" /></I>;
 export const FlashIcon = (p) => <I {...p}><path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z" /></I>;
+export const EyeIcon = (p) => <I {...p}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.8" /></I>;
+export const EyeOffIcon = (p) => <I {...p}><path d="M2.5 12S6 5.5 12 5.5c1.7 0 3.2.5 4.5 1.2M21.5 12S18 18.5 12 18.5c-1.7 0-3.2-.5-4.5-1.2" /><path d="M4 4l16 16" /></I>;
+export const GearIcon = (p) => <I {...p}><circle cx="12" cy="12" r="3.2" /><path d="M12 2.8l1.6 2.6 3-.7.7 3 2.6 1.6-1.6 2.6 1.6 2.6-2.6 1.6-.7 3-3-.7L12 21.2l-1.6-2.6-3 .7-.7-3-2.6-1.6 1.6-2.6-1.6-2.6 2.6-1.6.7-3 3 .7z" /></I>;
 export const TableIcon = (p) => <I {...p}><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" /><path d="M3.5 10h17M3.5 15h17M10 4.5v15" /></I>;
 export const ChartIcon = (p) => <I {...p}><path d="M4 19V5M4 19h16M7 15l4-5 3 3 5-7" /></I>;
 export const RobotIcon = (p) => <I {...p}><path d="M5 20V9q0-5 7-5t7 5v11z" /><circle cx="9.5" cy="10" r="1.3" /><circle cx="14.5" cy="10" r="1.3" /></I>;

@@ -3,9 +3,10 @@ import { CloseIcon, CopyIcon, DownloadIcon } from '../icons.jsx';
 import { LANGS } from '../i18n.js';
 import { SOURCE_TEXT } from '../script.js';
 
-// The page for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot), a test of the
-// link, the Python that runs on the robot, the keys.
-export default function Diagnostics({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
+// The settings, from the gear at the top left: the language (Italian, French, German, English), the theme, and what used to be the
+// link diagnostics, for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot),
+// a test of the link, the Python that runs on the robot, the keys.
+export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -45,7 +46,7 @@ export default function Diagnostics({ t, lang, onLang, theme, onTheme, link, bat
         <div className="rows">
           <div className="row">
             <span className="row-label">{t.diag.language}</span>
-            <div className="seg">{LANGS.map((l) => <button key={l.id} type="button" className={lang === l.id ? 'on' : ''} aria-pressed={lang === l.id} onClick={() => onLang(l.id)}>{l.label}</button>)}</div>
+            <div className="chips">{LANGS.map((l) => <button key={l.id} type="button" className="chip-btn" lang={l.id} aria-pressed={lang === l.id} onClick={() => onLang(l.id)}>{l.label}</button>)}</div>
           </div>
           <div className="row">
             <span className="row-label">{t.diag.theme}</span>

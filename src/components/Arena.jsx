@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer, useRef, useState } from 'react';
-import { SENSORS, COLLISION, PROX_MAX } from '../spec.js';
-import { ROBOT_RADIUS, boxCorners } from '../sim/arena.js';
+import { SENSORS, COLLISION, PROX_MAX, distanceFromProx } from '../spec.js';
+import RobotBody from './RobotBody.jsx';
+import { boxCorners } from '../sim/arena.js';
 import { sensorColor } from '../util.js';
 import { fmt } from '../i18n.js';
 import { CubeIcon, ResetIcon, TrashIcon, PlusIcon, EraserIcon } from '../icons.jsx';
@@ -83,13 +84,10 @@ export default function Arena({ t, sim, speed, onSpeed, hit }) {
             {SENSORS.map((s) => {
               const v = Math.min(1, (prox[s.id] || 0) / PROX_MAX);
               if (v < 0.02) return null;
-              const len = 18 + 70 * (1 - Math.sqrt(v));
+              const len = distanceFromProx(prox[s.id] || 0);
               return <line key={s.id} x1={s.y} y1={s.x} x2={s.y + Math.cos((s.angle * Math.PI) / 180) * len} y2={s.x - Math.sin((s.angle * Math.PI) / 180) * len} className="beam" style={{ stroke: sensorColor(s.id), opacity: 0.3 + 0.7 * v }} />;
             })}
-            <circle r={ROBOT_RADIUS} className={`body ${hitFresh ? 'hit' : ''}`} />
-            <path d={`M${ROBOT_RADIUS - 6},-18 L${ROBOT_RADIUS - 6},18`} className="front" />
-            <rect x="-14" y={-ROBOT_RADIUS - 2} width="28" height="9" rx="3" className="wheel" />
-            <rect x="-14" y={ROBOT_RADIUS - 7} width="28" height="9" rx="3" className="wheel" />
+            <g transform="rotate(90) scale(0.95)"><RobotBody hit={hitFresh} /></g>
             {SENSORS.map((s) => {
               const over = s.id < 5 && (prox[s.id] || 0) > COLLISION;
               return <circle key={s.id} cx={s.y} cy={s.x} r="5.2" className={`sdot ${over ? 'over' : ''}`} style={{ fill: sensorColor(s.id), fillOpacity: 0.35 + 0.65 * Math.min(1, (prox[s.id] || 0) / PROX_MAX) }} />;

@@ -68,3 +68,32 @@ export function timeTicks(from, now, maxTicks = 5) {
   out.push({ t: now, label: '' });
   return out;
 }
+
+// The points of a long series, thinned to at most two per bucket (the lowest and the highest), so that a peak survives:
+// [[t, value]] from `from` to `now`, for `buckets` columns of the chart.
+export function envelope(points, valueOf, from, now, buckets) {
+  let start = Math.max(0, indexAt(points, from));
+  if (points[start] && points[start].t < from) start += 1;                // nothing before the chart's left edge
+  if (points.length - start <= buckets * 2) return points.slice(start).map((p) => [p.t, valueOf(p)]);
+  const size = (now - from) / buckets;
+  const out = [];
+  let bucket = null;
+  let lo = null;
+  let hi = null;
+  const flush = () => {
+    if (!lo) return;
+    if (lo.t === hi.t) out.push([lo.t, lo.v]);
+    else if (lo.t < hi.t) out.push([lo.t, lo.v], [hi.t, hi.v]);
+    else out.push([hi.t, hi.v], [lo.t, lo.v]);
+  };
+  for (let k = start; k < points.length; k++) {
+    const p = points[k];
+    const v = valueOf(p);
+    const b = Math.floor((p.t - from) / size);
+    if (b !== bucket) { flush(); bucket = b; lo = { t: p.t, v }; hi = lo; continue; }
+    if (v < lo.v) lo = { t: p.t, v };
+    if (v > hi.v) hi = { t: p.t, v };
+  }
+  flush();
+  return out;
+}

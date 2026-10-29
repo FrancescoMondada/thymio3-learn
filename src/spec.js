@@ -16,6 +16,10 @@ export const SENSORS = [
 export const FRONT_SENSORS = 5;                 // only these can make the robot hit something
 
 export const PROX_MAX = 4095;
+// What a reading stands for: a low reading is a far object, a high one a near object (same curve as the virtual arena's sensors,
+// src/sim/arena.js: 4500 * (1 - d / 110)^2, about 4000 when touching, 3300 at 16 mm, nothing beyond 11 cm).
+export const SENSE_RANGE_MM = 110;
+export const distanceFromProx = (reading) => SENSE_RANGE_MM * (1 - Math.sqrt(Math.min(Math.max(reading, 0), 4500) / 4500));
 export const COLLISION = 3300;                  // COLLISION_SENSOR_VALUE: over this a front sensor means a collision
 export const SENSOR_SCALE = 20;                 // x = proximity / 20
 export const MOTOR_SCALE = 30;                  // wheel = sum(x * w) / 30

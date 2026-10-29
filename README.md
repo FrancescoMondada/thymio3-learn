@@ -48,23 +48,40 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
 
 ## Ce que montre la page
 
-- **Le réseau**: les capteurs à gauche (une jauge qui monte avec la lecture, un trait rouge au seuil de choc), les deux roues à
-  droite, 16 connexions. Une connexion est d'autant plus épaisse que son poids est grand; **bleu + flèche** = elle accélère la
-  roue, **rouge + barre** = elle freine; ce qui coule dessus (les points qui avancent) est la vitesse que ce capteur ajoute à
-  cette roue à cet instant. Un poids qui change clignote. Un clic sur un capteur ou une connexion ouvre son réglage manuel.
-  Sur un écran étroit le schéma se tourne d'un quart de tour (capteurs en haut, roues en bas).
+- **Le réseau**: les capteurs à gauche, les deux roues à droite, 16 connexions. Un capteur est une **barre** qui se remplit avec sa
+  lecture (0 à 4095), dans la couleur du capteur; un trait rouge marque le seuil de choc (la barre devient rouge au-dessus), et un
+  point gris est l'endroit d'où partent ses connexions. Une connexion est d'autant plus épaisse que son poids est grand; **bleu** =
+  elle accélère la roue, **rouge** = elle freine, les deux finissent par une flèche qui s'arrête un peu avant la roue; ce qui coule
+  dessus (les points qui avancent) est la vitesse que ce capteur ajoute à cette roue à cet instant. Un poids qui change clignote.
+  **Le nombre sur un trait est le poids: on le touche et on tape un autre nombre** (Entrée ou un clic ailleurs valide, Échap annule,
+  les flèches haut/bas ou − / + font un demi-cran). Il n'y a pas de curseur pour les poids.
+  Sur un écran étroit le schéma se tourne d'un quart de tour (capteurs en haut, en barres debout; roues en bas).
+- **Les roues** sont des « + » : une roue additionne la vitesse de base et ce qu'apporte chaque capteur, et le résultat sort à droite
+  (en dessous sur un écran étroit) vers **la roue elle-même**: un pneu dont les rainures avancent (vers le haut) ou reculent, à une
+  vitesse **exactement proportionnelle** à celle de la roue (0,5 px par seconde par unité de vitesse), et le nombre.
+- **Le robot** est dessiné d'après les photos du Thymio 3 (la boîte, et le dessous): nez arrondi, côtés droits, une échancrure de chaque
+  côté où se loge **la roue** (40 mm de long, 16 mm de large, à 26 mm derrière le milieu du corps, un peu en saillie), un talon plat
+  derrière les roues; dessus: la couronne des 5 boutons tactiles, les plots Lego (8 mm), le bouton rond. Les 7 capteurs y sont numérotés et
+  éclairés par ce qu'ils lisent (les deux de derrière sont dessinés sur le talon), chacun avec son **cône**: sa longueur est la
+  distance que la lecture représente (`distanceFromProx` dans `src/spec.js`), donc **lecture basse = objet loin = grand cône**
+  (toute la portée, 11 cm, pâle quand il ne voit rien), lecture haute = objet près = petit cône marqué. Même dessin et mêmes
+  distances dans l'arène virtuelle.
+- **Le cerveau** (en haut de la colonne de droite): un interrupteur « Apprentissage » (le robot apprend ou non), tout oublier,
+  quatre cerveaux tout faits (vierge, évite, attiré, prudent). Rien n'est enregistré.
 - **Ce que fait le robot**: avance → choc, recule → apprend, les leçons retenues (les 16 LED Lego), la règle d'apprentissage.
-- **Réglages**: vitesse d'apprentissage, vitesse du robot, oubli (jamais ou toutes les n s), pause, geler l'apprentissage, tout oublier,
-  quatre cerveaux tout faits (vierge, évite, attiré, prudent), un emplacement de mémoire pour un cerveau.
-- **Les poids**: le tableau 7 × 2; un capteur choisi se règle avec un curseur, une valeur tapée, ou un cran de plus ou de moins.
-- **Les poids au fil du temps**: une courbe par capteur et par roue (couleur et numéro du capteur partout les mêmes), les chocs
-  marqués, la valeur au toucher ou au survol, une vue tableau.
-- **Capteurs et roues**: les 30 dernières secondes, sur le même axe, le seuil de choc tracé.
+- **Réglages**: vitesse d'apprentissage, vitesse du robot, oubli (jamais ou toutes les n s), pause.
+- **Les signaux au fil du temps**: une pile de graphiques qui ont **le même axe du temps et les mêmes marges**, donc alignés de haut
+  en bas (ce qui se passe au même instant est sur la même verticale): les lectures des capteurs (avec le seuil de choc), les poids
+  vers la roue gauche, les poids vers la roue droite, la vitesse des roues. Chaque graphique se cache avec son œil, et on choisit les
+  signaux à comparer (capteurs 1 à 7, roue gauche, roue droite; « Tous » / « Aucun »). Une marque rouge sur tous les graphiques est un
+  choc; un seul curseur traverse la pile. Durée: 30 s, 1, 5 ou 15 min (le robot garde 15 min de lectures); vue tableau des poids.
 - **Robot virtuel** ou **robot réel** (bouton en haut): le virtuel est une arène où l'on **glisse les obstacles**, avec un temps
   accéléré (×1 à ×10); le réel remplace l'arène par le robot et sa batterie.
-- **Diagnostic** (icône en haut à droite, ou touche D): journal de la liaison, test de la liaison, le programme du robot, langue et thème.
+- **Paramètres** (la roue dentée en haut à gauche, ou la touche D): **la langue** (italien, français, allemand, anglais; la langue du navigateur
+  est prise si c'est l'une des quatre), le thème, et tout l'ancien diagnostic: la liaison avec le robot, le journal de la liaison, le test
+  de la liaison, le programme du robot, les raccourcis. (Le panneau des curseurs s'appelle « Réglages »; en anglais « Controls ».)
 
-Clavier: Espace = pause, G = geler, 0 = tout oublier, D = diagnostic.
+Clavier: Espace = pause, G = geler, 0 = tout oublier, D = paramètres.
 
 ## Comment ça marche avec un vrai robot
 

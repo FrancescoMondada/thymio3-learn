@@ -2,14 +2,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExtern
 import Network from './components/Network.jsx';
 import CycleStrip from './components/CycleStrip.jsx';
 import Controls from './components/Controls.jsx';
-import WeightTable, { SensorEditor } from './components/WeightEditor.jsx';
-import WeightChart from './components/WeightChart.jsx';
-import Activity from './components/Activity.jsx';
+import Brain from './components/Brain.jsx';
+import Timeline from './components/Timeline.jsx';
 import Arena from './components/Arena.jsx';
 import RealPanel from './components/RealPanel.jsx';
-import Diagnostics from './components/Diagnostics.jsx';
+import Settings from './components/Settings.jsx';
 import Help from './components/Help.jsx';
-import { BluetoothIcon, PulseIcon, HelpIcon, MoonIcon, SunIcon, WarnIcon } from './icons.jsx';
+import { BluetoothIcon, GearIcon, HelpIcon, MoonIcon, SunIcon, WarnIcon } from './icons.jsx';
 import { I18N, detectLang } from './i18n.js';
 import { Telemetry } from './store.js';
 import { SimBackend } from './sim/sim-backend.js';
@@ -20,7 +19,6 @@ import { useSize } from './util.js';
 
 const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch { return fallback; } };
 const save = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private mode */ } };
-const parse = (text) => { try { return JSON.parse(text); } catch { return null; } };
 
 const weightChange = (left, right) => ({ left: Object.fromEntries(left.map((v, i) => [i, v])), right: Object.fromEntries(right.map((v, i) => [i, v])) });
 
@@ -31,13 +29,11 @@ export default function App() {
   const [tab, setTab] = useState('net');
   const [source, setSource] = useState('virtual');                  // 'virtual' | 'robot'
   const [simSpeed, setSimSpeed] = useState(1);
-  const [selected, setSelected] = useState(null);                   // { sensor, wheel }
-  const [diag, setDiag] = useState(false);
+  const [settings, setSettings] = useState(false);
   const [help, setHelp] = useState(() => load('learn.help', '') !== '1');
   const [log, setLog] = useState([]);
   const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState('');
-  const [saved, setSaved] = useState(() => parse(load('learn.brain', 'null')));
   const bluetooth = supportsBluetooth();
 
   const tele = useRef(null);
@@ -117,7 +113,7 @@ export default function App() {
   }, [backToVirtual]);
 
   const connect = useCallback(async () => {
-    if (!bluetooth) { setDiag(true); return; }
+    if (!bluetooth) { setSettings(true); return; }
     setNotice('');
     if (!robot.current) {
       robot.current = new RobotBackend((ev) => onRobotEvent(ev), { onLog });
@@ -162,15 +158,6 @@ export default function App() {
 
   const setWeight = useCallback((sensor, wheel, w) => send({ [wheel === 0 ? 'left' : 'right']: { [sensor]: w } }), [send]);
   const applyPreset = useCallback((p) => send(weightChange(p.left, p.right)), [send]);
-  const saveBrain = () => {
-    const rec = { weights: snap.weights, params: snap.params, at: Date.now() };
-    save('learn.brain', JSON.stringify(rec));
-    setSaved(rec);
-  };
-  const loadBrain = () => {
-    if (!saved) return;
-    send({ ...weightChange(saved.weights.left, saved.weights.right), step: saved.params.step, base: saved.params.base, forget: saved.params.forget });
-  };
 
   const selfTest = useCallback(async () => {
     if (!robot.current) return;
@@ -189,7 +176,7 @@ export default function App() {
       const tag = e.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || e.target?.isContentEditable) return;
       const { snap: s, online: ok, send: go } = keyState.current;
-      if (e.key === 'd' || e.key === 'D') { setDiag((v) => !v); return; }
+      if (e.key === 'd' || e.key === 'D') { setSettings((v) => !v); return; }
       if (!ok) return;
       if (e.key === ' ') { e.preventDefault(); go({ command: s.state === 'pause' ? CMD.RESUME : CMD.PAUSE }); }
       else if (e.key === 'g' || e.key === 'G') go({ command: s.state === 'freeze' ? CMD.LEARN : CMD.FREEZE });
@@ -216,6 +203,7 @@ export default function App() {
     <div className={`app tab-${tab}`}>
       <header className="top">
         <div className="brand">
+          <button type="button" className="icon-btn" onClick={() => setSettings(true)} aria-label={t.head.diag} title={`${t.head.diag} (D)`}><GearIcon /></button>
           <img src="icon.svg" alt="" width="30" height="30" />
           <div>
             <h1>{t.app.title}</h1>
@@ -236,7 +224,6 @@ export default function App() {
             {dark ? <SunIcon /> : <MoonIcon />}
           </button>
           <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
-          <button type="button" className="icon-btn" onClick={() => setDiag(true)} aria-label={t.head.diag} title={`${t.head.diag} (D)`}><PulseIcon /></button>
         </div>
       </header>
 
@@ -264,16 +251,16 @@ export default function App() {
             <div ref={netRef} className="net-wrap">
               <Network
                 t={t} weights={brainNow} prox={snap.prox} motors={snap.motors} base={snap.params.base} hit={snap.lastHit} now={snap.t} changed={snap.changed}
-                selected={selected} onSelect={(sensor, wheel) => setSelected({ sensor, wheel })} vertical={vertical}
+                enabled={enabled} onSetWeight={setWeight} vertical={vertical}
               />
             </div>
             <ul className="net-legend">
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-pos" /><path d="M20,2 L30,7 L20,12 Z" className="c-pos" /></svg>{t.net.legendPos}</li>
-              <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H26" className="l-neg" /><path d="M29,1 L29,13" className="c-neg" /></svg>{t.net.legendNeg}</li>
-              <li><svg width="26" height="14" aria-hidden="true"><circle cx="13" cy="7" r="6.2" className="l-shell" /><path d="M6,4 H20" className="l-thr" /></svg>{t.net.legendThreshold}</li>
+              <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-neg" /><path d="M20,2 L30,7 L20,12 Z" className="c-neg" /></svg>{t.net.legendNeg}</li>
+              <li><svg width="34" height="14" aria-hidden="true"><rect x="1" y="3" width="32" height="8" rx="4" className="l-track" /><rect x="1" y="3" width="20" height="8" rx="4" className="l-fill" /><path d="M26,0.5 V13.5" className="l-thr" /></svg>{t.net.legendThreshold}</li>
             </ul>
             <p className="muted small formula">{t.net.formula}</p>
-            <SensorEditor t={t} weights={brainNow} selected={selected} onSet={setWeight} onClose={() => setSelected(null)} enabled={enabled} />
+            <p className="muted small pick">{t.net.pick}</p>
           </section>
 
           <div data-tab="arena">
@@ -282,22 +269,18 @@ export default function App() {
               : <Arena t={t} sim={sim.current} speed={simSpeed} onSpeed={setSimSpeed} hit={snap.lastHit} />}
           </div>
 
-          <div data-tab="curves"><WeightChart t={t} hist={snap.hist} now={snap.t} t0={snap.t0} /></div>
-          <div data-tab="curves"><Activity t={t} hist={snap.hist} now={snap.t} /></div>
+          <div data-tab="curves"><Timeline t={t} hist={snap.hist} now={snap.t} t0={snap.t0} /></div>
         </div>
 
         <div className="col side">
           <div data-tab="net">
+            <Brain t={t} state={snap.state} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} />
+          </div>
+          <div data-tab="net">
             <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} forget={snap.params.forget} />
           </div>
           <div data-tab="settings">
-            <Controls
-              t={t} params={snap.params} state={snap.state} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset}
-              saved={saved} onSave={saveBrain} onLoad={loadBrain}
-            />
-          </div>
-          <div data-tab="settings">
-            <WeightTable t={t} weights={brainNow} selected={selected} onSelect={(sensor, wheel) => { setSelected({ sensor, wheel }); }} />
+            <Controls t={t} params={snap.params} state={snap.state} enabled={enabled} onChange={send} />
           </div>
         </div>
       </main>
@@ -309,10 +292,10 @@ export default function App() {
       </nav>
 
       {help && <Help t={t} onClose={() => { setHelp(false); save('learn.help', '1'); }} />}
-      {diag && (
-        <Diagnostics
+      {settings && (
+        <Settings
           t={t} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
-          log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setDiag(false)} bluetooth={bluetooth}
+          log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}
     </div>

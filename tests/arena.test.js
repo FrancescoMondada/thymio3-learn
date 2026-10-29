@@ -83,3 +83,11 @@ test('the interface changes a running virtual robot through the same messages as
   sim.stop();
   assert.equal(events.at(-1).type, 'bye');
 });
+
+test('distanceFromProx: the inverse of the sensor curve (low reading = far, high = near)', async () => {
+  const { distanceFromProx } = await import('../src/spec.js');
+  for (const d of [5, 16, 30, 60, 90]) assert.ok(Math.abs(distanceFromProx(proxFromDistance(d)) - d) < 1.2, `${d} mm`);
+  assert.equal(distanceFromProx(0), 110);
+  assert.ok(distanceFromProx(4095) < 6);
+  assert.ok(distanceFromProx(1000) > distanceFromProx(3000));
+});
