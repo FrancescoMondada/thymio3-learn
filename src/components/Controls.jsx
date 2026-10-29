@@ -1,0 +1,80 @@
+import React from 'react';
+import Slider from './Slider.jsx';
+import { DEFAULT_BASE, DEFAULT_FORGET, DEFAULT_STEP, PRESETS, RANGES } from '../spec.js';
+import { CMD } from '../protocol.js';
+import { useHeld, num } from '../util.js';
+import { fmt } from '../i18n.js';
+import { BrainIcon, EraserIcon, FolderIcon, PauseIcon, PlayIcon, SaveIcon, SnowIcon } from '../icons.jsx';
+
+// The settings: how fast it learns, how fast it drives, how fast it forgets; pause, freeze, forget everything; ready-made
+// brains; the memory of one brain. Every change is told to the robot (or the virtual one) as it is made.
+export default function Controls({ t, params, state, enabled, live, onChange, onPreset, saved, onSave, onLoad }) {
+  const [step, holdStep] = useHeld(params.step);
+  const [base, holdBase] = useHeld(Math.round(params.base));
+  const [forget, holdForget] = useHeld(params.forget);
+  const paused = state === 'pause';
+  const frozen = state === 'freeze';
+  const set = (key, hold) => (v) => { hold(v); onChange({ [key]: v }); };
+
+  return (
+    <section className="card controls" aria-label={t.ctl.title}>
+      <header className="card-head">
+        <h2>{t.ctl.title}</h2>
+        <LiveBadge t={t} live={live} enabled={enabled} />
+      </header>
+
+      <Slider
+        id="s-step" label={t.ctl.learnStep} hint={t.ctl.learnStepHint} value={step} {...RANGES.step} disabled={!enabled}
+        format={(v) => num(v)} defaultValue={DEFAULT_STEP} resetLabel={t.ctl.reset} onChange={set('step', holdStep)}
+      />
+      <Slider
+        id="s-base" label={t.ctl.base} hint={t.ctl.baseHint} value={base} {...RANGES.base} disabled={!enabled}
+        format={(v) => num(v, 0)} defaultValue={Math.round(DEFAULT_BASE)} resetLabel={t.ctl.reset} onChange={set('base', holdBase)}
+      />
+      <Slider
+        id="s-forget" label={t.ctl.forget} hint={forget > 0 ? fmt(t.ctl.forgetHint, { s: forget }) : t.ctl.forgetOff} value={forget} {...RANGES.forget} disabled={!enabled}
+        format={(v) => (v > 0 ? fmt(t.ctl.forgetEvery, { s: v }) : t.ctl.forgetOff)} defaultValue={DEFAULT_FORGET} resetLabel={t.ctl.reset} onChange={set('forget', holdForget)}
+      />
+
+      <div className="btn-row">
+        <button type="button" className={`btn ${paused ? 'primary' : ''}`} disabled={!enabled} onClick={() => onChange({ command: paused ? CMD.RESUME : CMD.PAUSE })} aria-pressed={paused}>
+          {paused ? <PlayIcon size={17} /> : <PauseIcon size={17} />}{paused ? t.ctl.resume : t.ctl.pause}
+        </button>
+        <button type="button" className={`btn ${frozen ? 'on' : ''}`} disabled={!enabled} onClick={() => onChange({ command: frozen ? CMD.LEARN : CMD.FREEZE })} aria-pressed={frozen}>
+          <SnowIcon size={17} />{frozen ? t.ctl.unfreeze : t.ctl.freeze}
+        </button>
+        <button type="button" className="btn" disabled={!enabled} onClick={() => onChange({ command: CMD.RESET })} title={t.ctl.forgetAllHint}>
+          <EraserIcon size={17} />{t.ctl.forgetAll}
+        </button>
+      </div>
+
+      <div className="group">
+        <h3 title={t.ctl.presetsHint}><BrainIcon size={16} />{t.ctl.presets}</h3>
+        <div className="chips">
+          {PRESETS.map((p) => (
+            <button key={p.id} type="button" className="chip-btn" disabled={!enabled} onClick={() => onPreset(p)}>{t.ctl.preset[p.id]}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="group">
+        <h3>{t.ctl.memory}</h3>
+        <div className="btn-row tight">
+          <button type="button" className="btn" disabled={!enabled} onClick={onSave}><SaveIcon size={17} />{t.ctl.save}</button>
+          <button type="button" className="btn" disabled={!enabled || !saved} onClick={onLoad}><FolderIcon size={17} />{t.ctl.load}</button>
+        </div>
+        <p className="muted small">{saved ? fmt(t.ctl.saved, { time: new Date(saved.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }) : t.ctl.nothingSaved}</p>
+      </div>
+    </section>
+  );
+}
+
+// What happened to the last change: sent, received, or not confirmed.
+function LiveBadge({ t, live, enabled }) {
+  if (!enabled) return <span className="badge muted">{t.ctl.offline}</span>;
+  if (live.giveUp) return <span className="badge bad" role="status">{t.ctl.gaveUp}</span>;
+  if (live.sending > 0) return <span className="badge wait" role="status">{t.ctl.sending}</span>;
+  if (live.failures > 0) return <span className="badge bad" role="status">{t.ctl.notSent}</span>;
+  if (live.lastMs) return <span className="badge ok" role="status">{fmt(t.ctl.sent, { ms: live.lastMs })}</span>;
+  return null;
+}

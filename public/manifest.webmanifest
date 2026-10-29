@@ -1,0 +1,13 @@
+{
+  "name": "Thymio · Neurones",
+  "short_name": "Neurones",
+  "description": "Regarde le robot Thymio 3 apprendre à éviter les obstacles : son réseau de neurones, ses poids, ses capteurs, en direct.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

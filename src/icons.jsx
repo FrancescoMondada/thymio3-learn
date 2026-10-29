@@ -1,0 +1,35 @@
+import React from 'react';
+
+// Small line icons (24 x 24, drawn with the text colour).
+const I = ({ children, size = 20, ...rest }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...rest}>{children}</svg>
+);
+
+export const BluetoothIcon = (p) => <I {...p}><path d="M7 7l10 10-5 4V3l5 4L7 17" /></I>;
+export const PauseIcon = (p) => <I {...p}><path d="M8 5v14M16 5v14" /></I>;
+export const PlayIcon = (p) => <I {...p}><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none" /></I>;
+export const SnowIcon = (p) => <I {...p}><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5" /></I>;
+export const BrainIcon = (p) => <I {...p}><circle cx="5" cy="6" r="2" /><circle cx="5" cy="18" r="2" /><circle cx="19" cy="12" r="2.4" /><path d="M7 6.4l9.8 4.6M7 17.6l9.8-4.6M7 6.2v0M7 17.8v0" /></I>;
+export const EraserIcon = (p) => <I {...p}><path d="M4 16l9-9 6 6-6 6H8z" /><path d="M13 19h7" /></I>;
+export const CloseIcon = (p) => <I {...p}><path d="M6 6l12 12M18 6L6 18" /></I>;
+export const PulseIcon = (p) => <I {...p}><path d="M2.5 12.5h4l2.5-6.5 4 12 2.5-5.5h6" /></I>;
+export const HelpIcon = (p) => <I {...p}><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 3.9M12 17.2v.1" /></I>;
+export const SunIcon = (p) => <I {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6" /></I>;
+export const MoonIcon = (p) => <I {...p}><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z" /></I>;
+export const CheckIcon = (p) => <I {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></I>;
+export const PlusIcon = (p) => <I {...p}><path d="M12 5v14M5 12h14" /></I>;
+export const MinusIcon = (p) => <I {...p}><path d="M5 12h14" /></I>;
+export const TrashIcon = (p) => <I {...p}><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></I>;
+export const ResetIcon = (p) => <I {...p}><path d="M4 12a8 8 0 108-8H8" /><path d="M11 1.5L8 4l3 2.5" /></I>;
+export const SaveIcon = (p) => <I {...p}><path d="M5 4h11l3 3v13H5z" /><path d="M8 4v5h7V4M8 20v-6h8v6" /></I>;
+export const FolderIcon = (p) => <I {...p}><path d="M3 7h6l2 2h10v10H3z" /></I>;
+export const CopyIcon = (p) => <I {...p}><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3" /></I>;
+export const DownloadIcon = (p) => <I {...p}><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14" /></I>;
+export const WarnIcon = (p) => <I {...p}><path d="M12 3.5L2.8 19.5h18.4z" /><path d="M12 10v4.5M12 17.2v.1" /></I>;
+export const ArrowUpIcon = (p) => <I {...p}><path d="M12 19V5M6 11l6-6 6 6" /></I>;
+export const ArrowDownIcon = (p) => <I {...p}><path d="M12 5v14M6 13l6 6 6-6" /></I>;
+export const FlashIcon = (p) => <I {...p}><path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z" /></I>;
+export const TableIcon = (p) => <I {...p}><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" /><path d="M3.5 10h17M3.5 15h17M10 4.5v15" /></I>;
+export const ChartIcon = (p) => <I {...p}><path d="M4 19V5M4 19h16M7 15l4-5 3 3 5-7" /></I>;
+export const RobotIcon = (p) => <I {...p}><path d="M5 20V9q0-5 7-5t7 5v11z" /><circle cx="9.5" cy="10" r="1.3" /><circle cx="14.5" cy="10" r="1.3" /></I>;
+export const CubeIcon = (p) => <I {...p}><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" /></I>;
