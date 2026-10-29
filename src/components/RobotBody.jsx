@@ -12,7 +12,7 @@ const STUD_ROWS = [[0, 1, 8, 9], [0, 1, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [
 const STUDS = STUD_ROWS.flatMap((cols, j) => cols.map((k) => [(k - 4.5) * 8, -9 + 8 * j]));
 const PAD = { x: 0, y: -26, r: 24 };
 
-export default function RobotBody({ hit = false, details = true, className = '' }) {
+export default function RobotBody({ hit = false, details = true, wheels = true, className = '' }) {
   return (
     <g className={`robot-body ${className}`}>
       <path d={BODY} className={`body ${hit ? 'hit' : ''}`} />
@@ -30,7 +30,7 @@ export default function RobotBody({ hit = false, details = true, className = '' 
           <circle cx="0" cy="45.6" r="0.9" className="stud" />
         </g>
       )}
-      {[-1, 1].map((side) => (
+      {wheels && [-1, 1].map((side) => (
         <g key={side} transform={`translate(${side * WHEEL.x} ${WHEEL.y})`} className="wheel-side">
           <rect x={-WHEEL.w / 2} y={-WHEEL.h / 2} width={WHEEL.w} height={WHEEL.h} rx="5" className="tyre" />
           {[-14, -8.5, -3, 2.5, 8, 13.5].map((y) => <path key={y} d={`M${-WHEEL.w / 2 + 3},${y} H${WHEEL.w / 2 - 3}`} className="rib" />)}

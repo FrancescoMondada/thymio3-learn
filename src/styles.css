@@ -172,7 +172,8 @@ main {
 
 /* ---- the network ------------------------------------------------------------------------------ */
 .net-wrap { width: 100%; }
-svg.network { display: block; width: 100%; height: auto; max-height: 680px; overflow: visible; }
+svg.network { display: block; width: 100%; height: auto; max-width: 680px; margin-inline: auto; overflow: visible; }
+svg.network.vertical { max-width: 460px; }
 .network text { font-family: inherit; }
 .conn .line { fill: none; stroke-linecap: round; transition: stroke-width 0.35s ease; }
 .conn.pos .line { stroke: var(--pos); }
@@ -209,22 +210,26 @@ svg.network { display: block; width: 100%; height: auto; max-height: 680px; over
 .neuron .shell { fill: var(--surface-2); }
 .neuron .rim { fill: none; stroke: var(--axis); stroke-width: 2; }
 @keyframes hotpulse { 0% { stroke-width: 9; opacity: 0.4; } 100% { stroke-width: 3; opacity: 1; } }
-.sensor-in .track { fill: var(--grid); stroke: var(--axis); stroke-width: 1; }
-.sensor-in .fill { transition: width 0.12s ease, height 0.12s ease; opacity: 0.92; }
-.sensor-in.over .fill { fill: var(--critical); }
-.sensor-in.over .track { stroke: var(--critical); }
-.sensor-in.hot .track { stroke: var(--critical); animation: hotpulse 0.9s ease-out 2; }
-.sensor-in .tick { stroke: var(--critical); stroke-width: 2; stroke-linecap: round; }
-.sensor-in .port { fill: var(--ink-2); }
-.sensor-in .one-pill { fill: var(--ink); }
-.sensor-in .one { font: 700 13px var(--mono); fill: var(--surface); }
+.net-robot .robot-body * { vector-effect: non-scaling-stroke; }
+.net-robot .robot-body .body { stroke-width: 2.6px; }
+.net-robot .robot-body .details .line { stroke-width: 1.1px; opacity: 0.55; }
+.net-robot .robot-body .details .stud { opacity: 0.35; }
+.cone .wedge { fill: currentColor; stroke: none; }
+.cone .far { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.network .hit-ring { fill: none; stroke: var(--critical); stroke-width: 2.5; animation: hotpulse 0.9s ease-out 2; }
+.s-read { font: 600 11px var(--mono); fill: var(--muted); font-variant-numeric: tabular-nums; pointer-events: none; }
+.s-back { fill: var(--surface); }
+.s-disc { stroke-width: 2.2; transition: fill-opacity 0.2s; }
+.s-disc.over { stroke: var(--critical); stroke-width: 3.6; }
+.s-num { font-size: 12.5px; font-weight: 700; fill: #fff; pointer-events: none; }
+.base-node .one-pill { fill: var(--ink); }
+.base-node .one { font: 700 13px var(--mono); fill: var(--surface); }
 .n-name { font-size: 13.5px; fill: var(--ink); }
 .n-name.small { font-size: 12px; font-weight: 600; fill: var(--ink-2); }
 .n-name.wheel { font-size: 14px; font-weight: 600; }
 .n-val { font: 600 12px var(--mono); fill: var(--muted); font-variant-numeric: tabular-nums; }
-.sensor-in.over .n-val { fill: var(--critical); }
 .badge-n { font-size: 10.5px; font-weight: 700; fill: #fff; }
-.neuron.out .speed { font-size: 25px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.neuron.out .speed { font-size: 24px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
 .neuron.out .plus { fill: none; stroke: var(--ink-2); stroke-width: 3.6; stroke-linecap: round; }
 .neuron.out .out-wire { fill: none; stroke: var(--ink-2); stroke-width: 2.4; stroke-linecap: round; }
 .neuron.out .out-head { fill: var(--ink-2); }
@@ -258,9 +263,8 @@ svg.network { display: block; width: 100%; height: auto; max-height: 680px; over
 .c-pos { fill: var(--pos); }
 .l-neg { stroke: var(--neg); stroke-width: 4; stroke-linecap: round; }
 .c-neg { fill: var(--neg); }
-.l-track { fill: var(--grid); stroke: var(--axis); stroke-width: 1; }
-.l-fill { fill: var(--s1); }
-.l-thr { stroke: var(--critical); stroke-width: 2; stroke-linecap: round; }
+.l-cone { fill: var(--s1); fill-opacity: 0.32; stroke: var(--s1); stroke-opacity: 0.6; stroke-width: 1; }
+.l-cone-dot { fill: var(--s1); }
 .formula { margin: 4px 0 8px; }
 .pick { margin-top: 8px; }
 

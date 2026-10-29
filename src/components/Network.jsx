@@ -1,69 +1,56 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import RobotTop from './RobotTop.jsx';
+import RobotBody, { WHEEL } from './RobotBody.jsx';
 import { MinusIcon, PlusIcon } from '../icons.jsx';
-import { PROX_MAX, COLLISION, W_LIMIT, contribution } from '../spec.js';
-import { MINUS, arrowEnds, bezierAt, clamp, curve, num, sensorColor, usePrefersReducedMotion } from '../util.js';
+import { PROX_MAX, COLLISION, SENSORS, SENSE_RANGE_MM, W_LIMIT, contribution, distanceFromProx } from '../spec.js';
+import { MINUS, arrowEnds, bezierAt, clamp, num, sensorColor, usePrefersReducedMotion } from '../util.js';
 import { fmt } from '../i18n.js';
 
-// The network, drawn as a diagram: 7 sensors and the constant "base" on the left, 2 wheels on the right, 16 connections.
-// A connection is as thick as its weight is large; blue (positive weight) and red (negative) both end in an arrow, a little
-// before the wheel; what flows along it is the speed that this sensor adds to this wheel right now. The number on a connection
-// is its weight: touch it to type another one.
-// A sensor is a bar that fills with its reading (a red tick marks the collision threshold) and ends in a small dot where its
-// connections start. A wheel is a "+": it adds up the base speed and what each sensor brings, and the result goes out on its right
-// (below it, turned), to the wheel itself, whose tyre stripes move in proportion to its speed, and the number.
-// `vertical` turns the diagram a quarter turn for narrow screens: sensors on top, wheels at the bottom.
+// The robot and its network in one picture: the robot seen from above, and inside it the network that drives it. The seven sensors
+// are on its nose, each with its cone (as long as the distance its reading stands for), the base speed on its tail, the two "+" neurons
+// beside the two wheels, and the 16 connections between them, as thick as their weights are large. Blue (positive weight) and red
+// (negative) both end in an arrow, a little before the neuron; what flows along a connection is the speed that this sensor adds to this
+// wheel right now. The number on a connection is its weight: touch it to type another one. A neuron adds up the base speed and what each
+// sensor brings, and sends the result to its wheel, whose tyre stripes move in proportion to the speed.
+// The robot is turned to face left on a wide screen (wheels at the top and the bottom), and faces up on a narrow one (`vertical`).
 
-const WHEEL_R = 44;
-const BAR = 112;                // the length of a sensor's reading bar (horizontal diagram)
-const BAR_V = 52;               // and its height (vertical diagram)
-const PORT = 5;                 // the dot where the connections of a sensor start
-const TREAD = 0.5;              // the stripes of a tyre move 0.5 px a second for one unit of wheel speed (12 px between two stripes)
-const GAP = 11;                 // between the tip of an arrow and the wheel
+const GAP = 9;                              // between the tip of an arrow and the neuron, px
+const RAD = Math.PI / 180;
+const NEURON = { x: 20, y: 26, r: 10.5 };   // mm, in the robot's drawing (x to the right, y to the back): inside the body, beside the wheel
+const SENSOR_R = 6;                         // mm
+const BASE_AT = [0, 46];                    // mm: where the base speed (the constant 1) sits, on the tail
+const DRAWN = { 5: [-20, 56], 6: [20, 56] };    // the back sensors, on the tail; the others are at SENSORS[i] (x, -y)
+const TREAD_MM = 0.2;                       // the stripes of a tyre move 0.2 mm a second for one unit of wheel speed
+const LEFT = 0;
+const RIGHT = 1;
 
+// The picture: where the robot's drawing (millimetres, front up) goes on the screen. `at` puts a point there, `dir` turns a direction.
 function layout(vertical) {
-  if (!vertical) {
-    const W = 900, H = 540;
-    const top = 52, step = (H - 104) / 7;
-    const outputs = [{ x: 670, y: 178, r: WHEEL_R }, { x: 670, y: 362, r: WHEEL_R }];
-    return {
-      W, H, vertical,
-      inputs: Array.from({ length: 8 }, (_, i) => ({ x: 400, y: top + i * step })),
-      outputs,
-      tyre: { w: 36, h: 104 },
-      robot: { x: 60, y: H / 2 - 80, size: 160, range: 90 },
-    };
-  }
-  const W = 420, H = 700;
-  const outputs = [{ x: 112, y: 514, r: WHEEL_R }, { x: 308, y: 514, r: WHEEL_R }];
-  return {
-    W, H, vertical,
-    inputs: Array.from({ length: 8 }, (_, i) => ({ x: 34 + i * 50.3, y: 305 })),
-    outputs,
-    tyre: { w: 30, h: 72 },
-    robot: { x: 160, y: 44, size: 100, range: 70 },
-  };
+  const s = vertical ? 2.4 : 4;
+  const W = vertical ? 420 : 770;
+  const H = vertical ? 510 : 640;
+  const cx = vertical ? 210 : 385;
+  const cy = vertical ? 255 : 320;
+  const at = vertical ? (x, y) => [cx + x * s, cy + y * s] : (x, y) => [cx + y * s, cy - x * s];
+  const dir = vertical ? (dx, dy) => [dx, dy] : (dx, dy) => [dy, -dx];
+  return { W, H, s, cx, cy, at, dir, rot: vertical ? 0 : -90, range: vertical ? 45 : 36, vertical };
 }
 
-// Where a connection leaves its sensor and arrives at its wheel: the arrivals are spread over the wheel's edge, and each one
-// comes in leaning towards the wheel's centre (`dir`, the way back along the curve) so that the arrow heads do not pile up.
-function ends(geo, i, j) {
-  const a = geo.inputs[i];
-  const o = geo.outputs[j];
-  const spread = ((i - 3.5) / 3.5) * (Math.PI / 2.8);
-  const n = geo.vertical ? [Math.sin(spread), -Math.cos(spread)] : [-Math.cos(spread), Math.sin(spread)];
-  const back = geo.vertical ? [0, -1] : [-1, 0];
-  const lean = 0.4;
-  const d = [back[0] * (1 - lean) + n[0] * lean, back[1] * (1 - lean) + n[1] * lean];
-  const len = Math.hypot(d[0], d[1]);
-  const p0 = geo.vertical ? [a.x, a.y + PORT] : [a.x + PORT, a.y];
-  return [p0, [o.x + n[0] * o.r, o.y + n[1] * o.r], [d[0] / len, d[1] / len]];
+const unit = ([x, y]) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; };
+const add = (p, v, k = 1) => [p[0] + v[0] * k, p[1] + v[1] * k];
+
+// The way a connection comes into a neuron, as a direction in the robot's drawing: from the nose side for the five front sensors (in the
+// order of their positions across the robot, so that the lines do not cross each other), from the tail for the back ones and the base.
+function arrival(i) {
+  if (i < 5) { const a = ((i - 2) / 2) * 52 * RAD; return [Math.sin(a), -Math.cos(a)]; }
+  const a = (i === 5 ? -40 : i === 6 ? 40 : 0) * RAD;
+  return [Math.sin(a), Math.cos(a)];
 }
 
 const widthOf = (w, full = 20) => 1.4 + 9 * Math.min(1, Math.abs(w) / full) ** 0.75;
 
 export default function Network({ t, weights, prox, motors, base, hit, now, changed, enabled = false, onSetWeight, vertical = false, showTips = true }) {
   const geo = useMemo(() => layout(vertical), [vertical]);
+  const { s, at, dir } = geo;
   const reduced = usePrefersReducedMotion();
   const wheels = t.net.wheels;
   const hitFresh = hit && now - hit.t < 2200;
@@ -80,35 +67,78 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
     onSetWeight?.(i, j, v);
   };
 
+  // where everything is, on the screen
+  const sensors = SENSORS.map((sensor) => {
+    const [x, y] = DRAWN[sensor.id] || [sensor.x, -sensor.y];
+    return { id: sensor.id, angle: sensor.angle, pos: at(x, y), r: SENSOR_R * s, d0: dir(0, sensor.id < 5 ? 1 : -1), axis: dir(-Math.sin(sensor.angle * RAD), -Math.cos(sensor.angle * RAD)) };
+  });
+  const baseNode = { pos: at(...BASE_AT), r: 11 };
+  const neurons = [LEFT, RIGHT].map((j) => {
+    const side = j === LEFT ? -1 : 1;
+    return { j, pos: at(side * NEURON.x, NEURON.y), r: NEURON.r * s, out: dir(side, 0), wheelAt: at(side * WHEEL.x, WHEEL.y) };
+  });
+
   // the 16 connections
   const conns = [];
-  for (let j = 0; j < 2; j++) {
-    const row = j === 0 ? weights.left : weights.right;
+  for (const N of neurons) {
+    const row = N.j === LEFT ? weights.left : weights.right;
     for (let i = 0; i < 8; i++) {
       const bias = i === 7;
-      const key = `${j}-${i}`;
+      const key = `${N.j}-${i}`;
       const w = bias ? base : held[key] ?? row[i];
       const reading = bias ? 1 : prox[i] || 0;
       const c = bias ? base : contribution(reading, w);
-      const [p0, p1, dir] = ends(geo, i, j);
-      const cv = curve(p0, p1, vertical, dir);
+      const from = bias ? baseNode : sensors[i];
+      const d0 = bias ? unit([N.pos[0] - from.pos[0], N.pos[1] - from.pos[1]]) : from.d0;
+      const n = dir(...arrival(i));
+      const p0 = add(from.pos, d0, from.r);
+      const p1 = add(N.pos, n, N.r);
+      const k = clamp(0.4 * Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), 24, 170);
+      const cp = [p0, add(p0, d0, k), add(p1, n, k), p1];
       const wpx = bias ? widthOf(w, 120) : widthOf(w);
       const zero = Math.abs(w) < 0.05;
-      const head = 9 + wpx * 0.9;
-      const stop = arrowEnds(cv.c, GAP, zero ? 0 : head);
-      conns.push({ i, j, bias, w, reading, c, cv, wpx, zero, head, hw: 5.1 + wpx * 0.51, stop, pos: w > 0, neg: w < 0, key });
+      const head = 8 + wpx * 0.7;
+      const stop = arrowEnds(cp, GAP, zero ? 0 : head);
+      const chipT = i > 4 ? 0.5 : N.j === LEFT ? 0.27 : 0.43;
+      conns.push({ i, j: N.j, bias, w, reading, c, cp, d: `M${p0[0]},${p0[1]} C${cp[1][0]},${cp[1][1]} ${cp[2][0]},${cp[2][1]} ${p1[0]},${p1[1]}`, wpx, zero, head, hw: 4 + wpx * 0.4, stop, pos: w > 0, neg: w < 0, key, chipT });
     }
   }
 
-  const speedFor = (j) => motors[j] || 0;
   const editingConn = editing ? conns.find((k) => k.i === editing.i && k.j === editing.j) : null;
   const open = (k) => { if (enabled && !k.bias) setEditing({ i: k.i, j: k.j }); };
-  const chipAt = (k) => bezierAt(k.cv.c, k.j === 0 ? 0.3 : 0.44);
+  const chipAt = (k) => bezierAt(k.cp, k.chipT);
 
   return (
     <div className="net-box">
       <svg className={`network ${vertical ? 'vertical' : ''}`} viewBox={`0 0 ${geo.W} ${geo.H}`} role="group" aria-label={t.net.title}>
-        <RobotTop {...geo.robot} prox={prox} hit={hitFresh ? hit.sensors : null} motors={motors} title={t.net.title} />
+        {/* the cones of the sensors, under the robot: long and faint when nothing is close, short and strong when something is */}
+        <g className="cones">
+          {sensors.map((sn) => {
+            const reading = prox[sn.id] || 0;
+            const v = clamp(reading / PROX_MAX, 0, 1);
+            const L = Math.max(4, (distanceFromProx(reading) / SENSE_RANGE_MM) * geo.range * s);
+            const sin = Math.sin(17 * RAD) * L;
+            const cos = Math.cos(17 * RAD) * L;
+            const tip = add(sn.pos, sn.axis, L + 13);
+            return (
+              <g key={sn.id} className="cone" style={{ color: sensorColor(sn.id) }}>
+                <g transform={`translate(${sn.pos[0]} ${sn.pos[1]}) rotate(${geo.rot - sn.angle})`}>
+                  <path d={`M0,0 L${-sin},${-cos} A${L},${L} 0 0 1 ${sin},${-cos} Z`} className="wedge" style={{ fillOpacity: 0.11 + 0.3 * v }} />
+                  <path d={`M${-sin},${-cos} A${L},${L} 0 0 1 ${sin},${-cos}`} className="far" style={{ strokeOpacity: 0.28 + 0.7 * v }} />
+                </g>
+                <text className="s-read" x={tip[0]} y={tip[1]} textAnchor="middle" dominantBaseline="central">{Math.round(reading)}</text>
+              </g>
+            );
+          })}
+        </g>
+
+        {/* the robot */}
+        <g className="net-robot" transform={`translate(${geo.cx} ${geo.cy}) rotate(${geo.rot}) scale(${s})`}>
+          <RobotBody wheels={false} hit={!!hitFresh} />
+        </g>
+
+        {/* the tyres: the stripes move up when the wheel goes forward, in proportion to its speed */}
+        {neurons.map((N) => <Tyre key={N.j} x={N.wheelAt[0]} y={N.wheelAt[1]} w={WHEEL.w * s} h={WHEEL.h * s} v={motors[N.j] || 0} rot={geo.rot} pxPerUnit={TREAD_MM * s} />)}
 
         {/* connections */}
         <g className="conns">
@@ -134,7 +164,7 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
                 <path d={k.stop.line} className="line" style={{ strokeWidth: zero ? 1 : wpx }} />
                 {flow && !reduced && <path d={k.stop.line} className="flow" style={{ '--dur': `${dur}s`, strokeWidth: Math.min(wpx, 4.5), opacity: clamp(0.35 + Math.abs(k.c) / 40, 0.35, 1) }} />}
                 {/* a wide invisible line to touch */}
-                <path d={k.cv.d} className="hit" onClick={() => open(k)} />
+                <path d={k.d} className="hit" onClick={() => open(k)} />
                 {!k.bias && (
                   <g
                     className={`chip ${enabled ? 'editable' : ''}`} transform={`translate(${cx} ${cy})`} style={isEd ? { visibility: 'hidden' } : undefined}
@@ -145,18 +175,12 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
                     <text textAnchor="middle" dominantBaseline="central" y="0.5">{label}</text>
                   </g>
                 )}
-                {k.bias && (
-                  <g className="chip bias-chip" transform={`translate(${cx} ${cy})`}>
-                    <rect x={-tw / 2} y="-10" width={tw} height="20" rx="10" />
-                    <text textAnchor="middle" dominantBaseline="central" y="0.5">{label}</text>
-                  </g>
-                )}
               </g>
             );
           })}
         </g>
 
-        {/* the arrows: they stop short of the wheel, and the line stops where the head starts */}
+        {/* the arrows: they stop short of the neuron, and the line stops where the head starts */}
         <g className="heads">
           {conns.map((k) => {
             if (k.zero) return null;
@@ -173,87 +197,58 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
           })}
         </g>
 
-        {/* sensors: a bar that fills with the reading, and the dot where the connections start */}
-        {geo.inputs.map((n, i) => {
-          const bias = i === 7;
-          const reading = bias ? PROX_MAX : prox[i] || 0;
-          const level = clamp(reading / PROX_MAX, 0, 1);
-          const front = !bias && i < 5;
-          const over = front && reading > COLLISION;
-          const hot = !bias && hitFresh && hit.sensors[i];
-          const name = bias ? t.net.bias : t.net.sensors[i];
-          const thr = COLLISION / PROX_MAX;
-          const shown = bias ? num(base, 0) : Math.round(reading);
-          const badge = (
-            <>
-              <circle r="9" className="badge" style={{ fill: sensorColor(i) }} />
-              <text className="badge-n" textAnchor="middle" dominantBaseline="central" y="0.5" style={i === 3 ? { fill: '#0b0b0b' } : undefined}>{i + 1}</text>
-            </>
-          );
+        {/* the base speed: the constant 1 */}
+        <g className="base-node" transform={`translate(${baseNode.pos[0]} ${baseNode.pos[1]})`}>
+          {showTips && <title>{t.net.formula}</title>}
+          <rect x="-14" y="-10" width="28" height="20" rx="10" className="one-pill" />
+          <text className="one" textAnchor="middle" dominantBaseline="central" y="1">1</text>
+          <text className="n-name small" x={vertical ? 0 : 22} y={vertical ? 21 : 0} textAnchor={vertical ? 'middle' : 'start'} dominantBaseline="central">{t.net.biasShort} {num(base, 0)}</text>
+        </g>
+
+        {/* the sensors, on the nose: numbered, filled by what they read */}
+        {sensors.map((sn) => {
+          const reading = prox[sn.id] || 0;
+          const v = clamp(reading / PROX_MAX, 0, 1);
+          const over = sn.id < 5 && reading > COLLISION;
+          const hot = hitFresh && hit.sensors[sn.id];
+          const name = t.net.sensors[sn.id];
           return (
-            <g key={i} className={`sensor-in ${over ? 'over' : ''} ${hot ? 'hot' : ''} ${bias ? 'bias' : ''}`} transform={`translate(${n.x} ${n.y})`}
-              role={bias ? undefined : 'img'} aria-label={bias ? undefined : fmt(t.net.neuron, { sensor: name, p: Math.round(reading) })}>
-              {showTips && <title>{bias ? t.net.formula : fmt(t.net.neuron, { sensor: name, p: Math.round(reading) })}</title>}
-              {!vertical ? (
-                <>
-                  {!bias && <g transform="translate(-178 0)">{badge}</g>}
-                  <text className="n-name" x="-162" y="-9" dominantBaseline="central">{name}</text>
-                  {bias ? (
-                    <>
-                      <rect x="-162" y="-2" width="26" height="17" rx="8.5" className="one-pill" />
-                      <text className="one" x="-149" y="7" textAnchor="middle" dominantBaseline="central">1</text>
-                    </>
-                  ) : (
-                    <>
-                      <rect x="-162" y="2" width={BAR} height="11" rx="5.5" className="track" />
-                      <rect x="-162" y="2" width={Math.max(level * BAR, level > 0 ? 6 : 0)} height="11" rx="5.5" className="fill" style={over ? undefined : { fill: sensorColor(i) }} />
-                      {front && <line x1={-162 + BAR * thr} x2={-162 + BAR * thr} y1="-1" y2="16" className="tick" />}
-                      <text className="n-val" x="-42" y="8" dominantBaseline="central">{shown}</text>
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  {!bias && <g transform="translate(0 -111)">{badge}</g>}
-                  <text className="n-name small" y="-94" textAnchor="middle" dominantBaseline="central">{bias ? t.net.biasShort : t.net.short[i]}</text>
-                  {bias ? (
-                    <>
-                      <rect x="-10" y="-68" width="20" height="26" rx="10" className="one-pill" />
-                      <text className="one" y="-54" textAnchor="middle" dominantBaseline="central">1</text>
-                    </>
-                  ) : (
-                    <>
-                      <rect x="-7" y={-31 - BAR_V} width="14" height={BAR_V} rx="7" className="track" />
-                      <rect x="-7" y={-31 - Math.max(level * BAR_V, level > 0 ? 7 : 0)} width="14" height={Math.max(level * BAR_V, level > 0 ? 7 : 0)} rx="7" className="fill" style={over ? undefined : { fill: sensorColor(i) }} />
-                      {front && <line x1="-11" x2="11" y1={-31 - BAR_V * thr} y2={-31 - BAR_V * thr} className="tick" />}
-                      <text className="n-val" y="-15" textAnchor="middle" dominantBaseline="central">{shown}</text>
-                    </>
-                  )}
-                </>
-              )}
-              <circle r={PORT} className="port" />
+            <g key={sn.id} transform={`translate(${sn.pos[0]} ${sn.pos[1]})`} role="img" aria-label={fmt(t.net.neuron, { sensor: name, p: Math.round(reading) })}>
+              {showTips && <title>{fmt(t.net.neuron, { sensor: name, p: Math.round(reading) })}</title>}
+              <circle r={sn.r} className="s-back" />
+              <circle r={sn.r} className={`s-disc ${over ? 'over' : ''}`} style={{ fill: sensorColor(sn.id), fillOpacity: 0.3 + 0.7 * v, stroke: sensorColor(sn.id) }} />
+              {hot && <circle r={sn.r + 6} className="hit-ring" />}
+              <text className="s-num" textAnchor="middle" dominantBaseline="central" y="0.5" style={sn.id === 3 ? { fill: '#0b0b0b' } : undefined}>{sn.id + 1}</text>
             </g>
           );
         })}
 
-        {/* wheels: a "+" that adds up its inputs; the result goes out to the wheel itself, with its speed */}
-        {geo.outputs.map((o, j) => {
-          const v = speedFor(j);
-          const { w, h } = geo.tyre;
-          const out = !vertical
-            ? { wire: `M${o.r + 2},0 H${o.r + 22}`, head: `M${o.r + 34},0 L${o.r + 21},-6.5 L${o.r + 21},6.5 Z`, tx: o.r + 58, ty: 0, nx: o.r + 88, ny: 1, name: [0, o.r + 30] }
-            : { wire: `M0,${o.r + 2} V${o.r + 22}`, head: `M0,${o.r + 34} L-6.5,${o.r + 21} L6.5,${o.r + 21} Z`, tx: -26, ty: o.r + 76, nx: -2, ny: o.r + 76, name: [0, o.r + 124] };
+        {/* the two neurons: a "+" beside each wheel; the result goes out to the wheel, with its speed */}
+        {neurons.map((N) => {
+          const v = motors[N.j] || 0;
+          const o = N.out;
+          const a = add(N.pos, o, N.r + 3);
+          const b = add(N.pos, o, N.r + 17);
+          const perp = [-o[1], o[0]];
+          const tipP = add(N.pos, o, N.r + 24);
+          const baseP = add(N.pos, o, N.r + 11);
+          const l = add(baseP, perp, 6);
+          const rgt = add(baseP, perp, -6);
+          const head = `M${tipP[0]},${tipP[1]} L${l[0]},${l[1]} L${rgt[0]},${rgt[1]} Z`;
+          // the speed and the name of the wheel, outside the robot beside the wheel (the short name on a narrow screen)
+          const numAt = add(N.wheelAt, o, WHEEL.w * s / 2 + (vertical ? 30 : 22));
+          const nameAt = vertical ? add(numAt, [0, 1], 22) : add(numAt, o, 24);
+          const r = N.r;
           return (
-            <g key={j} className="neuron out" transform={`translate(${o.x} ${o.y})`}>
-              {showTips && <title>{fmt(t.net.wheelTip, { wheel: wheels[j], v: num(v, 0) })}</title>}
-              <circle r={o.r} className="shell" />
-              <circle r={o.r} className="rim" />
-              <path className="plus" d="M-14,0 H14 M0,-14 V14" />
-              <path className="out-wire" d={out.wire} />
-              <path className="out-head" d={out.head} />
-              <Tyre x={out.tx} y={out.ty} w={w} h={h} v={v} />
-              <text className="speed" x={out.nx} y={out.ny} dominantBaseline="central">{num(v, 0)}</text>
-              <text className="n-name wheel" x={out.name[0]} y={out.name[1]} textAnchor="middle">{wheels[j]}</text>
+            <g key={N.j} className="neuron out">
+              {showTips && <title>{fmt(t.net.wheelTip, { wheel: wheels[N.j], v: num(v, 0) })}</title>}
+              <circle cx={N.pos[0]} cy={N.pos[1]} r={r} className="shell" />
+              <circle cx={N.pos[0]} cy={N.pos[1]} r={r} className="rim" />
+              <path className="plus" d={`M${N.pos[0] - r * 0.45},${N.pos[1]} H${N.pos[0] + r * 0.45} M${N.pos[0]},${N.pos[1] - r * 0.45} V${N.pos[1] + r * 0.45}`} />
+              <path className="out-wire" d={`M${a[0]},${a[1]} L${b[0]},${b[1]}`} />
+              <path className="out-head" d={head} />
+              <text className="speed" x={numAt[0]} y={numAt[1]} textAnchor="middle" dominantBaseline="central">{num(v, 0)}</text>
+              <text className="n-name wheel" x={nameAt[0]} y={nameAt[1]} textAnchor="middle" dominantBaseline="central">{vertical ? t.net.wheelsShort[N.j] : wheels[N.j]}</text>
             </g>
           );
         })}
@@ -269,9 +264,9 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
   );
 }
 
-// The wheel, seen from above, front up: the stripes of its tyre move up when it goes forward and down when it backs up, at a rate
-// that is exactly proportional to the wheel's speed (TREAD px a second for each unit; still when the speed is 0).
-function Tyre({ x, y, w, h, v }) {
+// A wheel, seen from above, front up (turned by `rot` on the screen): the stripes of its tyre move forward when it goes forward and
+// backward when it backs up, at a rate exactly proportional to the wheel's speed (`pxPerUnit` px a second for each unit; still at 0).
+function Tyre({ x, y, w, h, v, rot, pxPerUnit }) {
   const reduced = usePrefersReducedMotion();
   const tread = useRef(null);
   const speed = useRef(v);
@@ -283,7 +278,7 @@ function Tyre({ x, y, w, h, v }) {
     let offset = 0;
     const step = (now) => {
       if (last && tread.current) {
-        offset = (offset - speed.current * TREAD * (Math.min(now - last, 250) / 1000)) % 12;
+        offset = (offset - speed.current * pxPerUnit * (Math.min(now - last, 250) / 1000)) % 12;
         tread.current.style.strokeDashoffset = offset;
       }
       last = now;
@@ -293,9 +288,9 @@ function Tyre({ x, y, w, h, v }) {
     // a page that gets no animation frames (in the background) keeps the stripes going on a timer
     const timer = setInterval(() => { const now = performance.now(); if (now - last > 120) step(now); }, 100);
     return () => { cancelAnimationFrame(raf); clearInterval(timer); };
-  }, [reduced]);
+  }, [reduced, pxPerUnit]);
   return (
-    <g className="wheel-glyph" transform={`translate(${x} ${y})`}>
+    <g className="wheel-glyph" transform={`translate(${x} ${y}) rotate(${rot})`}>
       <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={w / 3} className="tire" />
       <path ref={tread} d={`M0,${h / 2 - 5} V${-h / 2 + 5}`} className="tread" style={{ strokeWidth: w - 10 }} />
     </g>

@@ -48,24 +48,21 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
 
 ## Ce que montre la page
 
-- **Le réseau**: les capteurs à gauche, les deux roues à droite, 16 connexions. Un capteur est une **barre** qui se remplit avec sa
-  lecture (0 à 4095), dans la couleur du capteur; un trait rouge marque le seuil de choc (la barre devient rouge au-dessus), et un
-  point gris est l'endroit d'où partent ses connexions. Une connexion est d'autant plus épaisse que son poids est grand; **bleu** =
-  elle accélère la roue, **rouge** = elle freine, les deux finissent par une flèche qui s'arrête un peu avant la roue; ce qui coule
-  dessus (les points qui avancent) est la vitesse que ce capteur ajoute à cette roue à cet instant. Un poids qui change clignote.
-  **Le nombre sur un trait est le poids: on le touche et on tape un autre nombre** (Entrée ou un clic ailleurs valide, Échap annule,
-  les flèches haut/bas ou − / + font un demi-cran). Il n'y a pas de curseur pour les poids.
-  Sur un écran étroit le schéma se tourne d'un quart de tour (capteurs en haut, en barres debout; roues en bas).
-- **Les roues** sont des « + » : une roue additionne la vitesse de base et ce qu'apporte chaque capteur, et le résultat sort à droite
-  (en dessous sur un écran étroit) vers **la roue elle-même**: un pneu dont les rainures avancent (vers le haut) ou reculent, à une
-  vitesse **exactement proportionnelle** à celle de la roue (0,5 px par seconde par unité de vitesse), et le nombre.
-- **Le robot** est dessiné d'après les photos du Thymio 3 (la boîte, et le dessous): nez arrondi, côtés droits, une échancrure de chaque
-  côté où se loge **la roue** (40 mm de long, 16 mm de large, à 26 mm derrière le milieu du corps, un peu en saillie), un talon plat
-  derrière les roues; dessus: la couronne des 5 boutons tactiles, les plots Lego (8 mm), le bouton rond. Les 7 capteurs y sont numérotés et
-  éclairés par ce qu'ils lisent (les deux de derrière sont dessinés sur le talon), chacun avec son **cône**: sa longueur est la
-  distance que la lecture représente (`distanceFromProx` dans `src/spec.js`), donc **lecture basse = objet loin = grand cône**
-  (toute la portée, 11 cm, pâle quand il ne voit rien), lecture haute = objet près = petit cône marqué. Même dessin et mêmes
-  distances dans l'arène virtuelle.
+- **Le robot et son réseau, dans une seule image**: le robot vu de dessus, dessiné d'après les photos du Thymio 3 (nez arrondi,
+  côtés droits, une échancrure de chaque côté où se loge la roue, un talon plat), et **le réseau de neurones dedans**. Sur un écran
+  large le robot regarde vers la gauche (les roues sont en haut et en bas); sur un écran étroit il regarde vers le haut.
+  - **Les 7 capteurs** sont sur son nez, numérotés, remplis par ce qu'ils lisent, chacun avec son **cône**: sa longueur est la distance
+    que la lecture représente (`distanceFromProx` dans `src/spec.js`), donc **lecture basse = objet loin = grand cône** (pâle quand il
+    ne voit rien), lecture haute = objet près = petit cône marqué; le nombre au bout est la lecture (0 à 4095). Un anneau rouge = choc.
+  - **La vitesse de base** (la constante 1) est sur le talon; **les deux neurones « + »** sont dans le corps, chacun à côté de sa roue.
+    Un neurone additionne la vitesse de base et ce qu'apporte chaque capteur, et envoie le résultat à **sa roue**: un pneu dont les
+    rainures avancent ou reculent à une vitesse **exactement proportionnelle** à celle de la roue, avec le nombre à côté.
+  - **16 connexions** relient les capteurs et la base aux neurones, d'autant plus épaisses que leur poids est grand; **bleu** = elle
+    accélère la roue, **rouge** = elle freine, les deux finissent par une flèche qui s'arrête un peu avant le neurone; ce qui coule dessus
+    est la vitesse que ce capteur ajoute à cette roue à cet instant. Un poids qui change clignote.
+    **Le nombre sur un trait est le poids: on le touche et on tape un autre nombre** (Entrée ou un clic ailleurs valide, Échap annule,
+    les flèches haut/bas ou − / + font un demi-cran). Il n'y a pas de curseur pour les poids; la vitesse de base se règle avec le curseur
+    « vitesse du robot ».
 - **Le cerveau** (en haut de la colonne de droite): un interrupteur « Apprentissage » (le robot apprend ou non), tout oublier,
   quatre cerveaux tout faits (vierge, évite, attiré, prudent). Rien n'est enregistré.
 - **Ce que fait le robot**: avance → choc, recule → apprend, les leçons retenues (les 16 LED Lego), la règle d'apprentissage.

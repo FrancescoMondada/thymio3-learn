@@ -257,7 +257,7 @@ export default function App() {
             <ul className="net-legend">
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-pos" /><path d="M20,2 L30,7 L20,12 Z" className="c-pos" /></svg>{t.net.legendPos}</li>
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-neg" /><path d="M20,2 L30,7 L20,12 Z" className="c-neg" /></svg>{t.net.legendNeg}</li>
-              <li><svg width="34" height="14" aria-hidden="true"><rect x="1" y="3" width="32" height="8" rx="4" className="l-track" /><rect x="1" y="3" width="20" height="8" rx="4" className="l-fill" /><path d="M26,0.5 V13.5" className="l-thr" /></svg>{t.net.legendThreshold}</li>
+              <li><svg width="34" height="22" aria-hidden="true"><path d="M2,11 L32,1 A32,32 0 0 1 32,21 Z" className="l-cone" /><circle cx="4" cy="11" r="3.5" className="l-cone-dot" /></svg>{t.net.legendCone}</li>
             </ul>
             <p className="muted small formula">{t.net.formula}</p>
             <p className="muted small pick">{t.net.pick}</p>
