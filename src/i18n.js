@@ -61,6 +61,7 @@ const fr = {
   },
   brain: {
     title: 'Le cerveau',
+    menu: 'Cerveaux',
     learning: 'Apprentissage', on: 'oui', off: 'non',
     statusOn: 'Le robot apprend : chaque choc change les poids.',
     statusOff: "L'apprentissage est gelé : les chocs ne changent rien.",
@@ -192,6 +193,7 @@ const en = {
   },
   brain: {
     title: 'The brain',
+    menu: 'Brains',
     learning: 'Learning', on: 'on', off: 'off',
     statusOn: 'The robot is learning: every hit changes the weights.',
     statusOff: 'Learning is frozen: hits change nothing.',
@@ -323,6 +325,7 @@ const it = {
   },
   brain: {
     title: 'Il cervello',
+    menu: 'Cervelli',
     learning: 'Apprendimento', on: 'sì', off: 'no',
     statusOn: 'Il robot impara: ogni urto cambia i pesi.',
     statusOff: "L'apprendimento è congelato: gli urti non cambiano nulla.",
@@ -454,6 +457,7 @@ const de = {
   },
   brain: {
     title: 'Das Gehirn',
+    menu: 'Gehirne',
     learning: 'Lernen', on: 'an', off: 'aus',
     statusOn: 'Der Roboter lernt: jeder Stoß ändert die Gewichte.',
     statusOff: 'Das Lernen ist eingefroren: Stöße ändern nichts.',

@@ -2,7 +2,7 @@ import React from 'react';
 import { ResetIcon } from '../icons.jsx';
 
 // A labelled slider. `format(value)` writes the value; `defaultValue` (the maker's) gets a small button to go back to it.
-export default function Slider({ id, label, hint, value, min, max, step, onChange, format = String, defaultValue, resetLabel, disabled, ticks, signed }) {
+export default function Slider({ id, label, hint, title, value, min, max, step, onChange, format = String, defaultValue, resetLabel, disabled, ticks, signed }) {
   const pct = clamp01(((value - min) / (max - min)) * 100);
   // a signed slider is filled from the middle, in the colour of the sign
   const a = signed ? Math.min(pct, 50) : 0;
@@ -10,7 +10,7 @@ export default function Slider({ id, label, hint, value, min, max, step, onChang
   const fill = signed ? (value > 0 ? 'var(--pos)' : value < 0 ? 'var(--neg)' : 'var(--axis)') : undefined;
   const changed = defaultValue != null && Math.abs(value - defaultValue) > 1e-9;
   return (
-    <div className={`slider ${disabled ? 'off' : ''}`}>
+    <div className={`slider ${disabled ? 'off' : ''}`} title={title}>
       <div className="slider-head">
         <label htmlFor={id}>{label}</label>
         <output htmlFor={id}>{format(value)}</output>

@@ -49,6 +49,21 @@ export function useHeld(value, holdMs = 700) {
   return [held ? held.v : value, hold];
 }
 
+// Whether a media query matches, kept up to date.
+export function useMedia(query) {
+  const get = () => typeof window !== 'undefined' && !!window.matchMedia?.(query).matches;
+  const [on, setOn] = useState(get);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return undefined;
+    const change = () => setOn(mq.matches);
+    change();
+    mq.addEventListener?.('change', change);
+    return () => mq.removeEventListener?.('change', change);
+  }, [query]);
+  return on;
+}
+
 export function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   useEffect(() => {

@@ -25,14 +25,14 @@ const RIGHT = 1;
 
 // The picture: where the robot's drawing (millimetres, front up) goes on the screen. `at` puts a point there, `dir` turns a direction.
 function layout(vertical) {
-  const s = vertical ? 2.4 : 4;
-  const W = vertical ? 420 : 770;
-  const H = vertical ? 510 : 640;
-  const cx = vertical ? 210 : 385;
-  const cy = vertical ? 255 : 320;
+  const s = vertical ? 2.4 : 4.4;
+  const W = vertical ? 420 : 830;
+  const H = vertical ? 510 : 670;
+  const cx = vertical ? 210 : 415;
+  const cy = vertical ? 255 : 335;
   const at = vertical ? (x, y) => [cx + x * s, cy + y * s] : (x, y) => [cx + y * s, cy - x * s];
   const dir = vertical ? (dx, dy) => [dx, dy] : (dx, dy) => [dy, -dx];
-  return { W, H, s, cx, cy, at, dir, rot: vertical ? 0 : -90, range: vertical ? 45 : 36, vertical };
+  return { W, H, s, cx, cy, at, dir, rot: vertical ? 0 : -90, range: vertical ? 45 : 33, vertical };
 }
 
 const unit = ([x, y]) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; };
@@ -109,7 +109,7 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
   const chipAt = (k) => bezierAt(k.cp, k.chipT);
 
   return (
-    <div className="net-box">
+    <div className={`net-box ${vertical ? 'vertical' : ''}`} style={{ '--ar': geo.W / geo.H }}>
       <svg className={`network ${vertical ? 'vertical' : ''}`} viewBox={`0 0 ${geo.W} ${geo.H}`} role="group" aria-label={t.net.title}>
         {/* the cones of the sensors, under the robot: long and faint when nothing is close, short and strong when something is */}
         <g className="cones">

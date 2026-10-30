@@ -1,21 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Network from './components/Network.jsx';
 import CycleStrip from './components/CycleStrip.jsx';
-import Controls from './components/Controls.jsx';
-import Brain from './components/Brain.jsx';
+import ControlBar from './components/ControlBar.jsx';
 import Timeline from './components/Timeline.jsx';
 import Arena from './components/Arena.jsx';
 import RealPanel from './components/RealPanel.jsx';
 import Settings from './components/Settings.jsx';
 import Help from './components/Help.jsx';
-import { BluetoothIcon, GearIcon, HelpIcon, MoonIcon, SunIcon, WarnIcon } from './icons.jsx';
+import { BluetoothIcon, HelpIcon, WarnIcon } from './icons.jsx';
 import { I18N, detectLang } from './i18n.js';
 import { Telemetry } from './store.js';
 import { SimBackend } from './sim/sim-backend.js';
 import { RobotBackend } from './robot/robot-backend.js';
 import { supportsBluetooth } from './api.js';
 import { CMD } from './protocol.js';
-import { useSize } from './util.js';
+import { useMedia, useSize } from './util.js';
 
 const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch { return fallback; } };
 const save = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private mode */ } };
@@ -189,6 +188,7 @@ export default function App() {
   // the network is turned a quarter turn when its box is narrow
   const [netRef, { width: netWidth }] = useSize({ width: 800, height: 500 });
   const vertical = netWidth < 600;
+  const wide = useMedia('(min-width: 1001px)');                // the controls are in the top bar on a wide screen, a tab of their own on a narrow one
 
   const link = snap.link;
   const lost = live && (link.status === 'disconnected' || link.status === 'reconnect') && !connecting.current;
@@ -197,35 +197,35 @@ export default function App() {
   const enabled = online;
   const stateLabel = snap.running ? t.cycle[snap.state] : live ? (link.status === 'connecting' ? t.head.connecting : t.ctl.offline) : t.ctl.offline;
   const brainNow = snap.weights;
-  const dark = theme === 'dark' || (theme === 'auto' && typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-color-scheme: dark)').matches);
 
   return (
     <div className={`app tab-${tab}`}>
-      <header className="top">
-        <div className="brand">
-          <button type="button" className="icon-btn" onClick={() => setSettings(true)} aria-label={t.head.diag} title={`${t.head.diag} (D)`}><GearIcon /></button>
-          <img src="icon.svg" alt="" width="30" height="30" />
-          <div>
-            <h1>{t.app.title}</h1>
-            <p>{t.app.subtitle}</p>
+      <div className="topbar">
+        <header className="top">
+          <div className="brand">
+            <button type="button" className="app-icon" onClick={() => setSettings(true)} aria-label={t.head.diag} title={`${t.head.diag} (D)`} aria-haspopup="dialog">
+              <img src="icon.svg" alt="" width="32" height="32" />
+            </button>
+            <div>
+              <h1>{t.app.title}</h1>
+              <p>{t.app.subtitle}</p>
+            </div>
           </div>
-        </div>
-        <div className="top-mid">
-          <div className="seg source" role="group" aria-label={t.head.source}>
-            <button type="button" className={!live ? 'on' : ''} aria-pressed={!live} onClick={() => live && disconnect()}>{t.head.virtual}</button>
-            <button type="button" className={live ? 'on' : ''} aria-pressed={live} onClick={() => !live && connect()}>{t.head.real}</button>
+          <div className="top-mid">
+            <div className="seg source" role="group" aria-label={t.head.source}>
+              <button type="button" className={!live ? 'on' : ''} aria-pressed={!live} onClick={() => live && disconnect()}>{t.head.virtual}</button>
+              <button type="button" className={live ? 'on' : ''} aria-pressed={live} onClick={() => !live && connect()}>{t.head.real}</button>
+            </div>
+            <span className={`state-chip ${snap.running ? snap.state : 'off'}`} role="status"><i aria-hidden="true" />{stateLabel}</span>
           </div>
-          <span className={`state-chip ${snap.running ? snap.state : 'off'}`} role="status"><i aria-hidden="true" />{stateLabel}</span>
-        </div>
-        <div className="top-end">
-          {live && link.status === 'connected' && <button type="button" className="btn small" onClick={disconnect}>{t.head.disconnect}</button>}
-          {!live && bluetooth && <button type="button" className="btn small hide-narrow" onClick={connect}><BluetoothIcon size={16} />{t.head.connect}</button>}
-          <button type="button" className="icon-btn" onClick={() => setTheme(dark ? 'light' : 'dark')} aria-label={t.head.theme} title={t.head.theme}>
-            {dark ? <SunIcon /> : <MoonIcon />}
-          </button>
-          <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
-        </div>
-      </header>
+          <div className="top-end">
+            {live && link.status === 'connected' && <button type="button" className="btn small" onClick={disconnect}>{t.head.disconnect}</button>}
+            {!live && bluetooth && <button type="button" className="btn small hide-narrow" onClick={connect}><BluetoothIcon size={16} />{t.head.connect}</button>}
+            <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
+          </div>
+        </header>
+        {wide && <ControlBar t={t} state={snap.state} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} />}
+      </div>
 
       {(lost || modeEnded || notice || snap.error || starting || snap.live.giveUp) && (
         <div className="banner" role="alert">
@@ -243,10 +243,7 @@ export default function App() {
         <div className="col main">
           <section className="card net-card" data-tab="net" aria-label={t.net.title}>
             <header className="card-head">
-              <div>
-                <h2>{t.net.title}</h2>
-                <p className="muted small">{t.net.subtitle}</p>
-              </div>
+              <h2>{t.net.title} <span className="muted small">· {t.net.subtitle}</span></h2>
             </header>
             <div ref={netRef} className="net-wrap">
               <Network
@@ -259,9 +256,15 @@ export default function App() {
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-neg" /><path d="M20,2 L30,7 L20,12 Z" className="c-neg" /></svg>{t.net.legendNeg}</li>
               <li><svg width="34" height="22" aria-hidden="true"><path d="M2,11 L32,1 A32,32 0 0 1 32,21 Z" className="l-cone" /><circle cx="4" cy="11" r="3.5" className="l-cone-dot" /></svg>{t.net.legendCone}</li>
             </ul>
-            <p className="muted small formula">{t.net.formula}</p>
-            <p className="muted small pick">{t.net.pick}</p>
+            <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} forget={snap.params.forget} />
+            <p className="muted small formula">{t.net.formula} {t.net.pick}</p>
           </section>
+
+          {!wide && (
+            <div data-tab="settings">
+              <ControlBar t={t} state={snap.state} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} inPage />
+            </div>
+          )}
 
           <div data-tab="arena">
             {live
@@ -272,17 +275,6 @@ export default function App() {
           <div data-tab="curves"><Timeline t={t} hist={snap.hist} now={snap.t} t0={snap.t0} /></div>
         </div>
 
-        <div className="col side">
-          <div data-tab="net">
-            <Brain t={t} state={snap.state} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} />
-          </div>
-          <div data-tab="net">
-            <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} forget={snap.params.forget} />
-          </div>
-          <div data-tab="settings">
-            <Controls t={t} params={snap.params} state={snap.state} enabled={enabled} onChange={send} />
-          </div>
-        </div>
       </main>
 
       <nav className="tabbar" aria-label="Sections">
