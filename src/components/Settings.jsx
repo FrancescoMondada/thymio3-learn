@@ -63,6 +63,9 @@ export default function Settings({ t, lang, onLang, theme, onTheme, link, batter
           {battery ? <><dt>{t.diag.battery}</dt><dd>{battery.toFixed(2)} V</dd></> : null}
           <dt>{t.diag.mode}</dt><dd>{running ? t.diag.modeUp : t.diag.modeDown}</dd>
         </dl>
+        <p className="muted small">{t.real.hint}</p>
+        <p className="muted small">{t.real.live}</p>
+        <p className="muted small">{t.real.buttons}</p>
         {lastError && <p className="warn"><b>{t.diag.lastError}</b><br />{lastError}</p>}
 
         <h3>{t.diag.log}</h3>

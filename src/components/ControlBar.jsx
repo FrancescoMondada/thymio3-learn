@@ -4,7 +4,7 @@ import { DEFAULT_BASE, DEFAULT_FORGET, DEFAULT_STEP, PRESETS, RANGES } from '../
 import { CMD } from '../protocol.js';
 import { useHeld, num } from '../util.js';
 import { fmt } from '../i18n.js';
-import { BrainIcon, EraserIcon, PauseIcon, PlayIcon } from '../icons.jsx';
+import { BrainIcon, CheckIcon, EraserIcon, PauseIcon, PlayIcon, WarnIcon } from '../icons.jsx';
 
 // What the person does to the robot, in a bar: learning on or off, forget everything, a ready-made brain, pause, and the three sliders
 // (how fast it learns, how fast it drives, how fast it forgets). On a wide screen it is part of the top bar; on a narrow one it is a
@@ -80,17 +80,26 @@ export default function ControlBar({ t, state, params, enabled, live, onChange, 
         />
       </div>
 
-      <LiveBadge t={t} live={live} enabled={enabled} />
+      <LiveBadge t={t} live={live} enabled={enabled} compact={!inPage} />
     </section>
   );
 }
 
-// What happened to the last change: sent, received, or not confirmed.
-function LiveBadge({ t, live, enabled }) {
-  if (!enabled) return <span className="badge muted">{t.ctl.offline}</span>;
-  if (live.giveUp) return <span className="badge bad" role="status">{t.ctl.gaveUp}</span>;
-  if (live.sending > 0) return <span className="badge wait" role="status">{t.ctl.sending}</span>;
-  if (live.failures > 0) return <span className="badge bad" role="status">{t.ctl.notSent}</span>;
-  if (live.lastMs) return <span className="badge ok" role="status">{fmt(t.ctl.sent, { ms: live.lastMs })}</span>;
-  return null;
+// What happened to the last change: sent, received, or not confirmed. In the top bar it is a small mark of a fixed size (the words are
+// its tooltip), so that nothing moves when it appears; in the page it is a line of words.
+function LiveBadge({ t, live, enabled, compact }) {
+  let kind = '';
+  let text = '';
+  if (!enabled) { kind = 'muted'; text = t.ctl.offline; }
+  else if (live.giveUp) { kind = 'bad'; text = t.ctl.gaveUp; }
+  else if (live.sending > 0) { kind = 'wait'; text = t.ctl.sending; }
+  else if (live.failures > 0) { kind = 'bad'; text = t.ctl.notSent; }
+  else if (live.lastMs) { kind = 'ok'; text = fmt(t.ctl.sent, { ms: live.lastMs }); }
+  if (!compact) return text ? <span className={`badge ${kind}`} role="status">{text}</span> : null;
+  const icon = kind === 'ok' ? <CheckIcon size={15} /> : kind === 'bad' ? <WarnIcon size={15} /> : null;
+  return (
+    <span className={`live-mark ${kind}`} role="status" title={kind === 'muted' ? undefined : text}>
+      {kind !== 'muted' && kind !== '' && <>{icon}<span className="sr-only">{text}</span></>}
+    </span>
+  );
 }

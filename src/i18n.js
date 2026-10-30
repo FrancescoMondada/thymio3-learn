@@ -101,12 +101,10 @@ const fr = {
     time: 'Temps virtuel {s} s',
   },
   real: {
-    title: 'Robot réel',
     hint: 'Pose le Thymio au sol, face à des obstacles (un livre, une boîte, un mur). Les capteurs détectent le choc à très courte distance.',
-    battery: 'Batterie', device: 'Robot', firmware: 'Firmware',
+    battery: 'Batterie', device: 'Robot',
     live: 'Les réglages passent par les LED du corps du robot : tu peux les voir clignoter un instant.',
     buttons: 'Les boutons du robot marchent aussi : flèche arrière = pause, flèche avant = reprendre, flèche gauche ou droite = geler ou reprendre l\'apprentissage, bouton central = quitter.',
-    notYet: 'Pas encore essayé sur un vrai robot : si quelque chose ne marche pas, ouvre les paramètres.',
   },
   diag: {
     title: 'Paramètres',
@@ -134,7 +132,7 @@ const fr = {
     ],
     close: "J'ai compris",
   },
-  tabs: { net: 'Réseau', settings: 'Réglages', curves: 'Courbes', arena: 'Arène', real: 'Robot' },
+  tabs: { net: 'Réseau', settings: 'Réglages', curves: 'Courbes', arena: 'Arène' },
 };
 
 const en = {
@@ -233,12 +231,10 @@ const en = {
     time: 'Virtual time {s} s',
   },
   real: {
-    title: 'Real robot',
     hint: 'Put the Thymio on the floor facing obstacles (a book, a box, a wall). The sensors detect the hit at a very short distance.',
-    battery: 'Battery', device: 'Robot', firmware: 'Firmware',
+    battery: 'Battery', device: 'Robot',
     live: "Settings go through the robot's body LEDs: you may see them blink for an instant.",
     buttons: "The robot's buttons work too: back arrow = pause, forward arrow = resume, left or right arrow = freeze or resume learning, centre button = quit.",
-    notYet: 'Not tried on a real robot yet: if something does not work, open the settings.',
   },
   diag: {
     title: 'Settings',
@@ -266,7 +262,7 @@ const en = {
     ],
     close: 'Got it',
   },
-  tabs: { net: 'Network', settings: 'Controls', curves: 'Curves', arena: 'Arena', real: 'Robot' },
+  tabs: { net: 'Network', settings: 'Controls', curves: 'Curves', arena: 'Arena' },
 };
 
 const it = {
@@ -365,12 +361,10 @@ const it = {
     time: 'Tempo virtuale {s} s',
   },
   real: {
-    title: 'Robot reale',
     hint: "Metti il Thymio per terra, davanti a degli ostacoli (un libro, una scatola, un muro). I sensori rilevano l'urto a una distanza molto breve.",
-    battery: 'Batteria', device: 'Robot', firmware: 'Firmware',
+    battery: 'Batteria', device: 'Robot',
     live: 'Le regolazioni passano dai LED del corpo del robot: puoi vederli lampeggiare per un istante.',
     buttons: "Funzionano anche i pulsanti del robot: freccia indietro = pausa, freccia avanti = riprendi, freccia sinistra o destra = congela o riprendi l'apprendimento, pulsante centrale = esci.",
-    notYet: 'Non ancora provato su un robot reale: se qualcosa non funziona, apri le impostazioni.',
   },
   diag: {
     title: 'Impostazioni',
@@ -398,7 +392,7 @@ const it = {
     ],
     close: 'Ho capito',
   },
-  tabs: { net: 'Rete', settings: 'Regolazioni', curves: 'Curve', arena: 'Arena', real: 'Robot' },
+  tabs: { net: 'Rete', settings: 'Regolazioni', curves: 'Curve', arena: 'Arena' },
 };
 
 const de = {
@@ -497,12 +491,10 @@ const de = {
     time: 'Virtuelle Zeit {s} s',
   },
   real: {
-    title: 'Echter Roboter',
     hint: 'Stelle den Thymio auf den Boden, vor Hindernisse (ein Buch, eine Schachtel, eine Wand). Die Sensoren erkennen den Stoß aus sehr kurzer Entfernung.',
-    battery: 'Batterie', device: 'Roboter', firmware: 'Firmware',
+    battery: 'Batterie', device: 'Roboter',
     live: 'Die Einstellungen laufen über die LEDs am Körper des Roboters: du siehst sie kurz aufblinken.',
     buttons: 'Die Tasten des Roboters funktionieren auch: Pfeil zurück = Pause, Pfeil vor = fortsetzen, Pfeil links oder rechts = Lernen einfrieren oder fortsetzen, mittlere Taste = beenden.',
-    notYet: 'Noch nicht an einem echten Roboter ausprobiert: wenn etwas nicht funktioniert, öffne die Einstellungen.',
   },
   diag: {
     title: 'Einstellungen',
@@ -530,7 +522,7 @@ const de = {
     ],
     close: 'Verstanden',
   },
-  tabs: { net: 'Netz', settings: 'Regler', curves: 'Kurven', arena: 'Arena', real: 'Roboter' },
+  tabs: { net: 'Netz', settings: 'Regler', curves: 'Kurven', arena: 'Arena' },
 };
 
 export const I18N = { it, fr, de, en };

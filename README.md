@@ -64,19 +64,25 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
     les flèches haut/bas ou − / + font un demi-cran). Il n'y a pas de curseur pour les poids; la vitesse de base se règle avec le curseur
     « vitesse du robot ».
 - **La barre du haut** (deux lignes, toujours visible sur un grand écran; il n'y a plus de colonne à droite): la première a l'icône de
-  l'application (elle ouvre les paramètres), le titre, robot virtuel ou réel, l'état du robot et le bouton pour connecter un Thymio;
+  l'application (elle ouvre les paramètres), le titre, robot virtuel ou réel et le bouton pour connecter un Thymio (avec un robot
+  réel: son nom, qui porte le numéro de série, et sa batterie, à côté du bouton);
   la seconde a **les commandes**: l'interrupteur « Apprentissage » (le robot apprend ou non), tout oublier, un menu de quatre cerveaux
   tout faits (vierge, évite, attiré, prudent), pause, et les trois curseurs (vitesse d'apprentissage, vitesse du robot, oubli: jamais
-  ou toutes les n s). Rien n'est enregistré. Sur un écran étroit les commandes sont l'onglet « Réglages » / « Controls ».
-- **Sous l'image**: la légende, et le cycle du robot: avance → choc, recule → apprend, une phrase pour l'état, les leçons retenues
-  (les 16 LED Lego du robot), les chocs, l'oubli et la règle d'apprentissage.
-- **Les signaux au fil du temps**: une pile de graphiques qui ont **le même axe du temps et les mêmes marges**, donc alignés de haut
+  ou toutes les n s). Rien n'est enregistré. Rien ne bouge dans la barre quand l'état du robot change: la confirmation « reçu par le
+  robot » est une petite coche dans la marge de droite (le texte est son infobulle). Sur un écran étroit les commandes sont l'onglet
+  « Réglages » / « Controls ».
+- **Au-dessus de l'image**, à droite du titre: le cycle du robot (avance → choc, recule → apprend, avec une marque sur l'étape en
+  cours) et les leçons retenues (les 16 LED Lego du robot). La phrase qui explique l'étape est l'infobulle du cycle, celle des chocs et
+  des leçons faites celle des leçons. **Sous l'image**: la légende et, dépliable, la règle d'apprentissage. Il n'y a plus de barre
+  sous l'image.
+- **Les signaux au fil du temps** (la carte se replie sur son titre, le choix est gardé): une pile de graphiques qui ont **le même axe du temps et les mêmes marges**, donc alignés de haut
   en bas (ce qui se passe au même instant est sur la même verticale): les lectures des capteurs (avec le seuil de choc), les poids
   vers la roue gauche, les poids vers la roue droite, la vitesse des roues. Chaque graphique se cache avec son œil, et on choisit les
   signaux à comparer (capteurs 1 à 7, roue gauche, roue droite; « Tous » / « Aucun »). Une marque rouge sur tous les graphiques est un
   choc; un seul curseur traverse la pile. Durée: 30 s, 1, 5 ou 15 min (le robot garde 15 min de lectures); vue tableau des poids.
-- **Robot virtuel** ou **robot réel** (bouton en haut): le virtuel est une arène où l'on **glisse les obstacles**, avec un temps
-  accéléré (×1 à ×10); le réel remplace l'arène par le robot et sa batterie.
+- **Robot virtuel** ou **robot réel** (bouton en haut): le virtuel a une arène où l'on **glisse les obstacles**, avec un temps
+  accéléré (×1 à ×10); la carte de l'arène se replie sur son titre (le robot virtuel continue de rouler). Avec un robot réel il n'y a
+  pas d'arène et pas de panneau à part: le robot est celui de l'image.
 - **Paramètres** (cliquer **l'icône de l'application**, en haut à gauche, ou la touche D): **la langue** (italien, français, allemand,
   anglais; la langue du navigateur est prise si c'est l'une des quatre), **le thème** (auto, clair, sombre), et tout l'ancien diagnostic:
   la liaison avec le robot, le journal de la liaison, le test de la liaison, le programme du robot, les raccourcis.
@@ -176,9 +182,9 @@ npm run build
 | `src/dev/fake-thymio.js`, `src/api.js` | Faux robot Bluetooth (`?fakerobot`); `api.js` choisit le vrai ou le faux |
 | `src/store.js` | Ce que la page sait du robot et son historique |
 | `src/App.jsx` | État, robot virtuel ou réel, clavier, mise en page (onglets sur écran étroit) |
-| `src/components/Network.jsx`, `RobotBody.jsx`, `RobotTop.jsx` | Le robot et son réseau en une image, le dessin du robot (aussi dans l'arène), le robot du panneau « robot réel » |
+| `src/components/Network.jsx`, `RobotBody.jsx` | Le robot et son réseau en une image, le dessin du robot (aussi dans l'arène) |
 | `src/components/Timeline.jsx`, `chartkit.js` | Les signaux au fil du temps (pile de graphiques alignés) |
-| `src/components/ControlBar.jsx`, `Slider.jsx`, `CycleStrip.jsx` | La barre de commandes, les curseurs, le cycle du robot |
-| `src/components/Arena.jsx`, `RealPanel.jsx`, `Settings.jsx`, `Help.jsx` | Arène, robot réel, paramètres (langue, thème, diagnostic), aide |
+| `src/components/ControlBar.jsx`, `Slider.jsx`, `CycleStrip.jsx`, `LinkInfo.jsx`, `Fold.jsx` | La barre de commandes, les curseurs, le cycle et les leçons, le nom et la batterie du robot, les cartes qui se replient |
+| `src/components/Arena.jsx`, `Settings.jsx`, `Help.jsx` | Arène, paramètres (langue, thème, diagnostic), aide |
 | `src/i18n.js`, `src/styles.css` | Textes (FR, EN) et style (couleurs en jetons, clair et sombre) |
 | `tests/` | `node --test`, liaison, Python (`test_ann_mode.py`, `fake_ann_robot.py`) |

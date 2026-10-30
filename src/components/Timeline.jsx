@@ -4,6 +4,7 @@ import { num, sensorColor, useSize } from '../util.js';
 import { ago, envelope, indexAt, line, niceMax, stepLine, timeTicks } from './chartkit.js';
 import { ChartIcon, EyeIcon, EyeOffIcon, TableIcon } from '../icons.jsx';
 import { fmt } from '../i18n.js';
+import { FoldTitle, useFold } from './Fold.jsx';
 
 // The signals over time, in one stack of charts that share the same time axis and the same left and right margins, so that what
 // happens at one instant lines up from top to bottom: the sensor readings, the weights towards each wheel, the wheel speeds.
@@ -19,7 +20,8 @@ const LANES = [
 const WHEEL_RANGE = 300;
 const ALL_SENSORS = [0, 1, 2, 3, 4, 5, 6];
 
-export default function Timeline({ t, hist, now, t0 }) {
+export default function Timeline({ t, hist, now, t0, foldable = true }) {
+  const [open, toggleOpen] = useFold('signals', foldable);
   const [win, setWin] = useState(60000);
   const [view, setView] = useState('chart');
   const [sensors, setSensors] = useState(ALL_SENSORS);               // the sensors shown
@@ -34,7 +36,7 @@ export default function Timeline({ t, hist, now, t0 }) {
   const M = { l: compact ? 38 : 46, r: compact ? 26 : 34, t: 8, b: 4 };
   const x = (tt) => M.l + ((tt - from) / (now - from || 1)) * (W - M.l - M.r);
   const xt = timeTicks(from, now);
-  const hits = useMemo(() => hist.events.filter((e) => e.kind === 'hit' && e.t >= from).map((e) => e.t), [hist.events, hist.events.length, from]);
+  const hits = useMemo(() => (open ? hist.events.filter((e) => e.kind === 'hit' && e.t >= from).map((e) => e.t) : []), [open, hist.events, hist.events.length, from]);
   const shownLanes = LANES.filter((l) => !off.includes(l.id));
 
   const toggle = (set, v) => set((list) => (list.includes(v) ? list.filter((a) => a !== v) : [...list, v].sort()));
@@ -44,22 +46,23 @@ export default function Timeline({ t, hist, now, t0 }) {
   // one scale for the weights of both wheels, from the largest weight of the sensors shown
   const maxW = useMemo(() => {
     let m = 0;
+    if (!open) return niceMax(m);
     for (let k = Math.max(0, indexAt(hist.w, from)); k < hist.w.length; k++) {
       for (const i of sensors) m = Math.max(m, Math.abs(hist.w[k].left[i]), Math.abs(hist.w[k].right[i]));
     }
     return niceMax(m * 1.1);
-  }, [hist.w, hist.w.length, from, sensors]);
+  }, [open, hist.w, hist.w.length, from, sensors]);
 
   const common = { t, W, M, from, now, xt, hits, x, cursor, setCursor };
 
   return (
-    <section className="card timeline" aria-label={t.chart.title}>
+    <section className={`card timeline ${open ? '' : 'folded'}`} aria-label={t.chart.title}>
       <header className="card-head">
         <div>
-          <h2>{t.chart.title}</h2>
-          <p className="muted small">{t.chart.sub}</p>
+          <FoldTitle open={open} onToggle={toggleOpen} controls="signals-body" foldable={foldable}>{t.chart.title}</FoldTitle>
+          {open && <p className="muted small">{t.chart.sub}</p>}
         </div>
-        <div className="toolbar">
+        {open && <div className="toolbar">
           <div className="seg" role="group" aria-label={t.chart.window}>
             {WINDOWS.map(([k, ms]) => <button key={k} type="button" className={win === ms ? 'on' : ''} aria-pressed={win === ms} onClick={() => setWin(ms)}>{t.chart[k]}</button>)}
           </div>
@@ -67,76 +70,78 @@ export default function Timeline({ t, hist, now, t0 }) {
             <button type="button" className={view === 'chart' ? 'on' : ''} aria-pressed={view === 'chart'} onClick={() => setView('chart')} title={t.chart.chart}><ChartIcon size={16} /></button>
             <button type="button" className={view === 'table' ? 'on' : ''} aria-pressed={view === 'table'} onClick={() => setView('table')} title={t.chart.table}><TableIcon size={16} /></button>
           </div>
-        </div>
+        </div>}
       </header>
 
-      {view === 'chart' ? (
-        <>
-          <div className="choose">
-            <div className="choose-row">
-              <span className="choose-label">{t.chart.sensors}</span>
-              <ul className="legend" aria-label={t.chart.sensors}>
-                {t.net.sensors.map((name, i) => (
-                  <li key={i}>
-                    <button type="button" aria-pressed={sensors.includes(i)} onClick={() => toggle(setSensors, i)} title={sensors.includes(i) ? t.chart.hide : t.chart.show}>
-                      <i className="key" style={{ background: sensorColor(i) }} aria-hidden="true" />{i + 1} {name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <span className="choose-actions">
-                <button type="button" className="link-btn" onClick={() => setSensors(ALL_SENSORS)}>{t.chart.all}</button>
-                <button type="button" className="link-btn" onClick={() => setSensors([])}>{t.chart.none}</button>
-              </span>
+      {open && <div id="signals-body">
+        {view === 'chart' ? (
+          <>
+            <div className="choose">
+              <div className="choose-row">
+                <span className="choose-label">{t.chart.sensors}</span>
+                <ul className="legend" aria-label={t.chart.sensors}>
+                  {t.net.sensors.map((name, i) => (
+                    <li key={i}>
+                      <button type="button" aria-pressed={sensors.includes(i)} onClick={() => toggle(setSensors, i)} title={sensors.includes(i) ? t.chart.hide : t.chart.show}>
+                        <i className="key" style={{ background: sensorColor(i) }} aria-hidden="true" />{i + 1} {name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <span className="choose-actions">
+                  <button type="button" className="link-btn" onClick={() => setSensors(ALL_SENSORS)}>{t.chart.all}</button>
+                  <button type="button" className="link-btn" onClick={() => setSensors([])}>{t.chart.none}</button>
+                </span>
+              </div>
+              <div className="choose-row">
+                <span className="choose-label">{t.chart.wheels}</span>
+                <ul className="legend" aria-label={t.chart.wheels}>
+                  {t.net.wheels.map((name, j) => (
+                    <li key={j}>
+                      <button type="button" aria-pressed={wheelsOn.includes(j)} onClick={() => toggle(setWheelsOn, j)} title={wheelsOn.includes(j) ? t.chart.hide : t.chart.show}>
+                        <i className={`key wheel-key ${j ? 'dashed' : ''}`} aria-hidden="true" />{name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <span className="choose-note"><i className="key hit-key" aria-hidden="true" />{t.chart.hit}</span>
+              </div>
             </div>
-            <div className="choose-row">
-              <span className="choose-label">{t.chart.wheels}</span>
-              <ul className="legend" aria-label={t.chart.wheels}>
-                {t.net.wheels.map((name, j) => (
-                  <li key={j}>
-                    <button type="button" aria-pressed={wheelsOn.includes(j)} onClick={() => toggle(setWheelsOn, j)} title={wheelsOn.includes(j) ? t.chart.hide : t.chart.show}>
-                      <i className={`key wheel-key ${j ? 'dashed' : ''}`} aria-hidden="true" />{name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <span className="choose-note"><i className="key hit-key" aria-hidden="true" />{t.chart.hit}</span>
-            </div>
-          </div>
 
-          <div ref={ref} className="sigs">
-            {LANES.map((lane) => {
-              const hidden = off.includes(lane.id);
-              const head = (
-                <div className="sig-head">
-                  <button type="button" className="eye" aria-pressed={!hidden} onClick={() => toggleLane(lane.id)} title={hidden ? t.chart.showChart : t.chart.hideChart} aria-label={`${hidden ? t.chart.showChart : t.chart.hideChart} : ${titles[lane.id]}`}>
-                    {hidden ? <EyeOffIcon size={17} /> : <EyeIcon size={17} />}
-                  </button>
-                  <h3>{titles[lane.id]}</h3>
-                </div>
-              );
-              if (hidden) return <div key={lane.id} className="sig off">{head}</div>;
-              return (
-                <div key={lane.id} className="sig">
-                  {head}
-                  {lane.id === 'read' && <Readings {...common} H={lane.h} id={lane.id} hist={hist} sensors={sensors} />}
-                  {lane.side != null && <Weights {...common} H={lane.h} id={lane.id} hist={hist} sensors={sensors} side={lane.side} maxW={maxW} />}
-                  {lane.id === 'wheels' && <Wheels {...common} H={lane.h} id={lane.id} hist={hist} wheelsOn={wheelsOn} />}
-                </div>
-              );
-            })}
-            {shownLanes.length > 0 && (
-              <svg className="axis-row" width={W} height="22" viewBox={`0 0 ${W} 22`} aria-hidden="true">
-                {xt.map((tk, k) => (
-                  <text key={k} x={x(tk.t)} y="15" className="tick" textAnchor={k === xt.length - 1 ? 'end' : 'middle'}>{k === xt.length - 1 ? t.chart.now : tk.label}</text>
-                ))}
-              </svg>
-            )}
-          </div>
-        </>
-      ) : (
-        <WeightTable t={t} hist={hist} now={now} from={from} />
-      )}
+            <div ref={ref} className="sigs">
+              {LANES.map((lane) => {
+                const hidden = off.includes(lane.id);
+                const head = (
+                  <div className="sig-head">
+                    <button type="button" className="eye" aria-pressed={!hidden} onClick={() => toggleLane(lane.id)} title={hidden ? t.chart.showChart : t.chart.hideChart} aria-label={`${hidden ? t.chart.showChart : t.chart.hideChart} : ${titles[lane.id]}`}>
+                      {hidden ? <EyeOffIcon size={17} /> : <EyeIcon size={17} />}
+                    </button>
+                    <h3>{titles[lane.id]}</h3>
+                  </div>
+                );
+                if (hidden) return <div key={lane.id} className="sig off">{head}</div>;
+                return (
+                  <div key={lane.id} className="sig">
+                    {head}
+                    {lane.id === 'read' && <Readings {...common} H={lane.h} id={lane.id} hist={hist} sensors={sensors} />}
+                    {lane.side != null && <Weights {...common} H={lane.h} id={lane.id} hist={hist} sensors={sensors} side={lane.side} maxW={maxW} />}
+                    {lane.id === 'wheels' && <Wheels {...common} H={lane.h} id={lane.id} hist={hist} wheelsOn={wheelsOn} />}
+                  </div>
+                );
+              })}
+              {shownLanes.length > 0 && (
+                <svg className="axis-row" width={W} height="22" viewBox={`0 0 ${W} 22`} aria-hidden="true">
+                  {xt.map((tk, k) => (
+                    <text key={k} x={x(tk.t)} y="15" className="tick" textAnchor={k === xt.length - 1 ? 'end' : 'middle'}>{k === xt.length - 1 ? t.chart.now : tk.label}</text>
+                  ))}
+                </svg>
+              )}
+            </div>
+          </>
+        ) : (
+          <WeightTable t={t} hist={hist} now={now} from={from} />
+        )}
+      </div>}
     </section>
   );
 }

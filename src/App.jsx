@@ -4,7 +4,7 @@ import CycleStrip from './components/CycleStrip.jsx';
 import ControlBar from './components/ControlBar.jsx';
 import Timeline from './components/Timeline.jsx';
 import Arena from './components/Arena.jsx';
-import RealPanel from './components/RealPanel.jsx';
+import LinkInfo from './components/LinkInfo.jsx';
 import Settings from './components/Settings.jsx';
 import Help from './components/Help.jsx';
 import { BluetoothIcon, HelpIcon, WarnIcon } from './icons.jsx';
@@ -195,11 +195,12 @@ export default function App() {
   const starting = live && link.status === 'connected' && !snap.running && !snap.error && started.current && snap.t === 0;
   const modeEnded = live && link.status === 'connected' && !snap.running && snap.t > 0;
   const enabled = online;
-  const stateLabel = snap.running ? t.cycle[snap.state] : live ? (link.status === 'connecting' ? t.head.connecting : t.ctl.offline) : t.ctl.offline;
   const brainNow = snap.weights;
+  const tabs = live ? ['net', 'settings', 'curves'] : ['net', 'settings', 'curves', 'arena'];       // the real robot has no arena
+  const shownTab = tabs.includes(tab) ? tab : 'net';
 
   return (
-    <div className={`app tab-${tab}`}>
+    <div className={`app tab-${shownTab}`}>
       <div className="topbar">
         <header className="top">
           <div className="brand">
@@ -216,7 +217,7 @@ export default function App() {
               <button type="button" className={!live ? 'on' : ''} aria-pressed={!live} onClick={() => live && disconnect()}>{t.head.virtual}</button>
               <button type="button" className={live ? 'on' : ''} aria-pressed={live} onClick={() => !live && connect()}>{t.head.real}</button>
             </div>
-            <span className={`state-chip ${snap.running ? snap.state : 'off'}`} role="status"><i aria-hidden="true" />{stateLabel}</span>
+            {live && <LinkInfo t={t} link={link} battery={snap.battery} />}
           </div>
           <div className="top-end">
             {live && link.status === 'connected' && <button type="button" className="btn small" onClick={disconnect}>{t.head.disconnect}</button>}
@@ -242,8 +243,12 @@ export default function App() {
       <main>
         <div className="col main">
           <section className="card net-card" data-tab="net" aria-label={t.net.title}>
-            <header className="card-head">
-              <h2>{t.net.title} <span className="muted small">· {t.net.subtitle}</span></h2>
+            <header className="card-head net-head">
+              <div>
+                <h2>{t.net.title}</h2>
+                <p className="muted small">{t.net.subtitle}</p>
+              </div>
+              <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} />
             </header>
             <div ref={netRef} className="net-wrap">
               <Network
@@ -256,8 +261,11 @@ export default function App() {
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-neg" /><path d="M20,2 L30,7 L20,12 Z" className="c-neg" /></svg>{t.net.legendNeg}</li>
               <li><svg width="34" height="22" aria-hidden="true"><path d="M2,11 L32,1 A32,32 0 0 1 32,21 Z" className="l-cone" /><circle cx="4" cy="11" r="3.5" className="l-cone-dot" /></svg>{t.net.legendCone}</li>
             </ul>
-            <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} forget={snap.params.forget} />
             <p className="muted small formula">{t.net.formula} {t.net.pick}</p>
+            <details className="rule">
+              <summary>{t.cycle.rule}</summary>
+              <p>{t.cycle.ruleText}</p>
+            </details>
           </section>
 
           {!wide && (
@@ -266,20 +274,16 @@ export default function App() {
             </div>
           )}
 
-          <div data-tab="arena">
-            {live
-              ? <RealPanel t={t} link={link} battery={snap.battery} prox={snap.prox} motors={snap.motors} hit={snap.lastHit} now={snap.t} />
-              : <Arena t={t} sim={sim.current} speed={simSpeed} onSpeed={setSimSpeed} hit={snap.lastHit} />}
-          </div>
+          {!live && <div data-tab="arena"><Arena t={t} sim={sim.current} speed={simSpeed} onSpeed={setSimSpeed} hit={snap.lastHit} foldable={wide} /></div>}
 
-          <div data-tab="curves"><Timeline t={t} hist={snap.hist} now={snap.t} t0={snap.t0} /></div>
+          <div data-tab="curves"><Timeline t={t} hist={snap.hist} now={snap.t} t0={snap.t0} foldable={wide} /></div>
         </div>
 
       </main>
 
       <nav className="tabbar" aria-label="Sections">
-        {['net', 'settings', 'curves', 'arena'].map((id) => (
-          <button key={id} type="button" className={tab === id ? 'on' : ''} aria-pressed={tab === id} onClick={() => setTab(id)}>{id === 'arena' && live ? t.tabs.real : t.tabs[id]}</button>
+        {tabs.map((id) => (
+          <button key={id} type="button" className={shownTab === id ? 'on' : ''} aria-pressed={shownTab === id} onClick={() => setTab(id)}>{t.tabs[id]}</button>
         ))}
       </nav>
 

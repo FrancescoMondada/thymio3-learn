@@ -36,3 +36,5 @@ export const TableIcon = (p) => <I {...p}><rect x="3.5" y="4.5" width="17" heigh
 export const ChartIcon = (p) => <I {...p}><path d="M4 19V5M4 19h16M7 15l4-5 3 3 5-7" /></I>;
 export const RobotIcon = (p) => <I {...p}><path d="M5 20V9q0-5 7-5t7 5v11z" /><circle cx="9.5" cy="10" r="1.3" /><circle cx="14.5" cy="10" r="1.3" /></I>;
 export const CubeIcon = (p) => <I {...p}><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" /></I>;
+export const ChevronIcon = (p) => <I {...p}><path d="M9 6l6 6-6 6" /></I>;
+export const BatteryIcon = (p) => <I {...p}><rect x="2.5" y="7" width="16" height="10" rx="2" /><path d="M21 10.5v3M6 10.5v3M10 10.5v3" /></I>;

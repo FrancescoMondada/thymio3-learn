@@ -18,13 +18,14 @@ export const sensorColor = (i) => `var(--s${i + 1})`;
 
 // The size of an element, kept up to date.
 export function useSize(initial = { width: 600, height: 300 }) {
-  const ref = useRef(null);
+  // a callback ref: the box may leave the page and come back (a chart folded away, a table shown instead), and the new box has to be measured
+  const [el, setEl] = useState(null);
   const [size, setSize] = useState(initial);
   useLayoutEffect(() => {
-    const el = ref.current;
     if (!el) return undefined;
     const read = () => {
       const r = el.getBoundingClientRect();
+      if (!r.width && !r.height) return;                       // not on screen: keep the last size
       setSize((s) => (Math.abs(s.width - r.width) < 0.5 && Math.abs(s.height - r.height) < 0.5 ? s : { width: r.width, height: r.height }));
     };
     read();
@@ -32,8 +33,8 @@ export function useSize(initial = { width: 600, height: 300 }) {
     const ro = new ResizeObserver(read);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-  return [ref, size];
+  }, [el]);
+  return [setEl, size];
 }
 
 // A value that stays what the person set while they are changing it, and goes back to the robot's after `holdMs` of quiet.
