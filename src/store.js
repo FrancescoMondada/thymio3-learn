@@ -22,7 +22,7 @@ function fresh() {
     weights: emptyWeights(),
     haveWeights: false,
     changed: {},                          // "wheel-sensor" -> t when that weight last changed
-    params: { step: DEFAULT_STEP, base: DEFAULT_BASE, forget: DEFAULT_FORGET },
+    params: { step: DEFAULT_STEP, baseLeft: DEFAULT_BASE, baseRight: DEFAULT_BASE, forget: DEFAULT_FORGET },
     t: 0,                                 // ms, the time of the last event (the robot's own clock: virtual or real)
     t0: 0,                                // ms, when this history began
     lastHit: null,                        // { t, sensors: [bool x 7] }
@@ -98,7 +98,7 @@ export class Telemetry {
         }
         break;
       }
-      case 'p': s.params = { step: ev.step, base: ev.base, forget: ev.forget }; break;
+      case 'p': s.params = { step: ev.step, baseLeft: ev.baseLeft, baseRight: ev.baseRight, forget: ev.forget }; break;
       case 'hit':
         s.lastHit = { t: ev.t ?? s.t, sensors: ev.sensors };
         s.hits += 1;

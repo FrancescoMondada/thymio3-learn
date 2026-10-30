@@ -1,27 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import RobotBody, { WHEEL } from './RobotBody.jsx';
 import { MinusIcon, PlusIcon } from '../icons.jsx';
-import { PROX_MAX, COLLISION, SENSORS, SENSE_RANGE_MM, W_LIMIT, contribution, distanceFromProx } from '../spec.js';
+import { PROX_MAX, COLLISION, DEFAULT_BASE, RANGES, SENSORS, SENSE_RANGE_MM, W_LIMIT, contribution, distanceFromProx } from '../spec.js';
 import { MINUS, arrowEnds, bezierAt, clamp, num, sensorColor, usePrefersReducedMotion } from '../util.js';
 import { fmt } from '../i18n.js';
 
 // The robot and its network in one picture: the robot seen from above, and inside it the network that drives it. The seven sensors
-// are on its nose, each with its cone (as long as the distance its reading stands for), the base speed on its tail, the two "+" neurons
-// beside the two wheels, and the 16 connections between them, as thick as their weights are large. Blue (positive weight) and red
+// are on its nose, each with its cone (as long as the distance its reading stands for), the constant input "1" on its tail, the two "+"
+// neurons beside the two wheels, and the 16 connections between them, as thick as their weights are large. Blue (positive weight) and red
 // (negative) both end in an arrow, a little before the neuron; what flows along a connection is the speed that this sensor adds to this
-// wheel right now. The number on a connection is its weight: touch it to type another one. A neuron adds up the base speed and what each
-// sensor brings, and sends the result to its wheel, whose tyre stripes move in proportion to the speed.
+// wheel right now. The number on a connection is its weight: touch it to type another one. The two connections of the input "1" are
+// the base speed: with nothing in front of the robot a wheel runs at 1 x its weight. A neuron adds up what its inputs bring and sends
+// the result to its wheel, whose tyre stripes move in proportion to the speed.
 // The robot is turned to face left on a wide screen (wheels at the top and the bottom), and faces up on a narrow one (`vertical`).
 
 const GAP = 9;                              // between the tip of an arrow and the neuron, px
 const RAD = Math.PI / 180;
 const NEURON = { x: 20, y: 26, r: 10.5 };   // mm, in the robot's drawing (x to the right, y to the back): inside the body, beside the wheel
 const SENSOR_R = 6;                         // mm
-const BASE_AT = [0, 46];                    // mm: where the base speed (the constant 1) sits, on the tail
+const BASE_AT = [0, 46];                    // mm: where the constant input 1 sits, on the tail
 const DRAWN = { 5: [-20, 56], 6: [20, 56] };    // the back sensors, on the tail; the others are at SENSORS[i] (x, -y)
 const TREAD_MM = 0.2;                       // the stripes of a tyre move 0.2 mm a second for one unit of wheel speed
 const LEFT = 0;
 const RIGHT = 1;
+const BIAS = 7;                             // the index of the constant input "1", after the seven sensors
 
 // The picture: where the robot's drawing (millimetres, front up) goes on the screen. `at` puts a point there, `dir` turns a direction.
 function layout(vertical) {
@@ -48,7 +50,7 @@ function arrival(i) {
 
 const widthOf = (w, full = 20) => 1.4 + 9 * Math.min(1, Math.abs(w) / full) ** 0.75;
 
-export default function Network({ t, weights, prox, motors, base, hit, now, changed, enabled = false, onSetWeight, vertical = false, showTips = true }) {
+export default function Network({ t, weights, prox, motors, bases, hit, now, changed, enabled = false, onSetWeight, onSetBase, vertical = false, showTips = true }) {
   const geo = useMemo(() => layout(vertical), [vertical]);
   const { s, at, dir } = geo;
   const reduced = usePrefersReducedMotion();
@@ -64,7 +66,8 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
     setHeld((h) => ({ ...h, [key]: v }));
     clearTimeout(timers.current[key]);
     timers.current[key] = setTimeout(() => setHeld((h) => { const n = { ...h }; delete n[key]; return n; }), 1200);
-    onSetWeight?.(i, j, v);
+    if (i === BIAS) onSetBase?.(j, v);
+    else onSetWeight?.(i, j, v);
   };
 
   // where everything is, on the screen
@@ -83,11 +86,11 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
   for (const N of neurons) {
     const row = N.j === LEFT ? weights.left : weights.right;
     for (let i = 0; i < 8; i++) {
-      const bias = i === 7;
+      const bias = i === BIAS;
       const key = `${N.j}-${i}`;
-      const w = bias ? base : held[key] ?? row[i];
+      const w = held[key] ?? (bias ? bases[N.j] : row[i]);
       const reading = bias ? 1 : prox[i] || 0;
-      const c = bias ? base : contribution(reading, w);
+      const c = bias ? w : contribution(reading, w);
       const from = bias ? baseNode : sensors[i];
       const d0 = bias ? unit([N.pos[0] - from.pos[0], N.pos[1] - from.pos[1]]) : from.d0;
       const n = dir(...arrival(i));
@@ -100,12 +103,20 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
       const head = 8 + wpx * 0.7;
       const stop = arrowEnds(cp, GAP, zero ? 0 : head);
       const chipT = i > 4 ? 0.5 : N.j === LEFT ? 0.27 : 0.43;
-      conns.push({ i, j: N.j, bias, w, reading, c, cp, d: `M${p0[0]},${p0[1]} C${cp[1][0]},${cp[1][1]} ${cp[2][0]},${cp[2][1]} ${p1[0]},${p1[1]}`, wpx, zero, head, hw: 4 + wpx * 0.4, stop, pos: w > 0, neg: w < 0, key, chipT });
+      const name = bias ? t.net.bias : t.net.sensors[i];
+      const tip = bias
+        ? fmt(t.net.tipBias, { wheel: wheels[N.j], w: num(w, 0) })
+        : fmt(t.net.tip, { sensor: name, wheel: wheels[N.j], w: num(w), p: Math.round(reading), c: num(c) });
+      const flash = !bias && changed && now - (changed[key] || -1e9) < 1400;
+      conns.push({
+        i, j: N.j, bias, w, reading, c, cp, d: `M${p0[0]},${p0[1]} C${cp[1][0]},${cp[1][1]} ${cp[2][0]},${cp[2][1]} ${p1[0]},${p1[1]}`, wpx, zero, head, hw: 4 + wpx * 0.4, stop,
+        pos: w > 0, neg: w < 0, key, chipT, name, tip, flash, label: num(w, bias ? 0 : 1), tone: zero ? 'zero' : w > 0 ? 'pos' : 'neg',
+      });
     }
   }
 
   const editingConn = editing ? conns.find((k) => k.i === editing.i && k.j === editing.j) : null;
-  const open = (k) => { if (enabled && !k.bias) setEditing({ i: k.i, j: k.j }); };
+  const open = (k) => { if (enabled) setEditing({ i: k.i, j: k.j }); };
   const chipAt = (k) => bezierAt(k.cp, k.chipT);
 
   return (
@@ -147,34 +158,14 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
             const { wpx, zero } = k;
             const flow = !zero && Math.abs(k.c) >= 0.4;
             const dur = clamp(1.5 - Math.abs(k.c) / 90, 0.3, 1.5);
-            const tone = zero ? 'zero' : k.pos ? 'pos' : 'neg';
-            const [cx, cy] = chipAt(k);
-            const label = k.bias ? num(k.w, 0) : num(k.w);
-            const tw = 9 + label.length * 6.6;
-            const flash = !k.bias && changed && now - (changed[`${k.j}-${k.i}`] || -1e9) < 1400;
-            const name = k.bias ? t.net.bias : t.net.sensors[k.i];
-            const tip = k.bias
-              ? fmt(t.net.tipBias, { wheel: wheels[k.j], c: num(k.c, 0) })
-              : fmt(t.net.tip, { sensor: name, wheel: wheels[k.j], w: num(k.w), p: Math.round(k.reading), c: num(k.c) });
-            const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(k); } };
             return (
-              <g key={k.key} className={`conn ${tone} ${isEd ? 'selected' : ''} ${flash ? 'changed' : ''} ${k.bias ? 'bias' : ''}`}>
-                {showTips && <title>{tip}</title>}
+              <g key={k.key} className={`conn ${k.tone} ${isEd ? 'selected' : ''} ${k.flash ? 'changed' : ''}`}>
+                {showTips && <title>{k.tip}</title>}
                 {isEd && <path d={k.stop.line} className="underlay" style={{ strokeWidth: wpx + 9 }} />}
                 <path d={k.stop.line} className="line" style={{ strokeWidth: zero ? 1 : wpx }} />
                 {flow && !reduced && <path d={k.stop.line} className="flow" style={{ '--dur': `${dur}s`, strokeWidth: Math.min(wpx, 4.5), opacity: clamp(0.35 + Math.abs(k.c) / 40, 0.35, 1) }} />}
                 {/* a wide invisible line to touch */}
                 <path d={k.d} className="hit" onClick={() => open(k)} />
-                {!k.bias && (
-                  <g
-                    className={`chip ${enabled ? 'editable' : ''}`} transform={`translate(${cx} ${cy})`} style={isEd ? { visibility: 'hidden' } : undefined}
-                    role="button" tabIndex={enabled ? 0 : -1} aria-disabled={!enabled} aria-label={`${name} → ${wheels[k.j]} : ${label}`}
-                    onClick={() => open(k)} onKeyDown={onKey}
-                  >
-                    <rect x={-tw / 2} y="-10" width={tw} height="20" rx="10" />
-                    <text textAnchor="middle" dominantBaseline="central" y="0.5">{label}</text>
-                  </g>
-                )}
               </g>
             );
           })}
@@ -187,7 +178,7 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
             const [x, y] = k.stop.tip;
             const shape = `M${-k.head},${-k.hw} L0,0 L${-k.head},${k.hw} Z`;
             return (
-              <g key={k.key} className={`conn ${k.pos ? 'pos' : 'neg'} ${k.bias ? 'bias' : ''}`}>
+              <g key={k.key} className={`conn ${k.pos ? 'pos' : 'neg'}`}>
                 <g transform={`translate(${x} ${y}) rotate(${k.stop.angle})`} className="head">
                   <path d={shape} className="halo" />
                   <path d={shape} className="tri" />
@@ -197,12 +188,35 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
           })}
         </g>
 
-        {/* the base speed: the constant 1 */}
+        {/* the weights, on top of every line so that each one can be touched */}
+        <g className="chips">
+          {conns.map((k) => {
+            const isEd = editing && editing.i === k.i && editing.j === k.j;
+            const [cx, cy] = chipAt(k);
+            const tw = 9 + k.label.length * 6.6;
+            const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(k); } };
+            return (
+              <g key={k.key} className={`conn ${k.tone} ${k.flash ? 'changed' : ''}`}>
+                <g
+                  className={`chip ${enabled ? 'editable' : ''}`} transform={`translate(${cx} ${cy})`} style={isEd ? { visibility: 'hidden' } : undefined}
+                  role="button" tabIndex={enabled ? 0 : -1} aria-disabled={!enabled} aria-label={`${k.name} → ${wheels[k.j]} : ${k.label}`}
+                  onClick={() => open(k)} onKeyDown={onKey}
+                >
+                  {showTips && <title>{k.tip}</title>}
+                  <rect x={-tw / 2} y="-10" width={tw} height="20" rx="10" />
+                  <text textAnchor="middle" dominantBaseline="central" y="0.5">{k.label}</text>
+                </g>
+              </g>
+            );
+          })}
+        </g>
+
+        {/* the constant input 1: its weight towards each wheel is that wheel's speed with nothing in front of the robot */}
         <g className="base-node" transform={`translate(${baseNode.pos[0]} ${baseNode.pos[1]})`}>
-          {showTips && <title>{t.net.formula}</title>}
+          {showTips && <title>{t.net.biasTip}</title>}
           <rect x="-14" y="-10" width="28" height="20" rx="10" className="one-pill" />
           <text className="one" textAnchor="middle" dominantBaseline="central" y="1">1</text>
-          <text className="n-name small" x={vertical ? 0 : 22} y={vertical ? 21 : 0} textAnchor={vertical ? 'middle' : 'start'} dominantBaseline="central">{t.net.biasShort} {num(base, 0)}</text>
+          <text className="n-name small" x={vertical ? 0 : 22} y={vertical ? 21 : 0} textAnchor={vertical ? 'middle' : 'start'} dominantBaseline="central">{t.net.biasCaption}</text>
         </g>
 
         {/* the sensors, on the nose: numbered, filled by what they read */}
@@ -255,7 +269,8 @@ export default function Network({ t, weights, prox, motors, base, hit, now, chan
       </svg>
       {editingConn && (
         <ChipEditor
-          key={editingConn.key} t={t} label={`${t.net.sensors[editingConn.i]} → ${wheels[editingConn.j]}`} value={editingConn.w}
+          key={editingConn.key} t={t} label={`${editingConn.bias ? t.net.bias : t.net.sensors[editingConn.i]} → ${wheels[editingConn.j]}`} value={editingConn.w}
+          spec={editingConn.bias ? BASE_SPEC : WEIGHT_SPEC} hint={editingConn.bias ? t.net.biasEdit : null}
           x={(chipAt(editingConn)[0] / geo.W) * 100} y={(chipAt(editingConn)[1] / geo.H) * 100}
           onSet={(v) => setWeight(editingConn.i, editingConn.j, v)} onClose={() => setEditing(null)}
         />
@@ -297,23 +312,30 @@ function Tyre({ x, y, w, h, v, rot, pxPerUnit }) {
   );
 }
 
+// What a number typed in a chip can be: a sensor's weight goes in half notches, from -100 to 100; a base speed in whole units, from 0 to 200
+// (the maker's value, 66.7, can be put back).
+const WEIGHT_SPEC = { step: 0.5, min: -W_LIMIT, max: W_LIMIT, digits: 1, reset: null };
+const BASE_SPEC = { step: 1, min: RANGES.base.min, max: RANGES.base.max, digits: 0, reset: DEFAULT_BASE };
+
 // A weight typed in the chip: the number, one notch less, one notch more. Enter or a click elsewhere sets it, Esc forgets it.
-function ChipEditor({ t, label, value, x, y, onSet, onClose }) {
-  const [text, setText] = useState(num(value));
+function ChipEditor({ t, label, hint, value, spec, x, y, onSet, onClose }) {
+  const first = useRef(num(value, spec.digits));
+  const [text, setText] = useState(first.current);
   const box = useRef(null);
   const input = useRef(null);
   const closed = useRef(false);
   useEffect(() => { input.current?.focus(); input.current?.select(); }, []);
   const read = (s) => { const v = Number(s.replace(MINUS, '-').replace(',', '.')); return s.trim() !== '' && Number.isFinite(v) ? v : null; };
-  const rounded = (v) => clamp(Math.round(v * 2) / 2, -W_LIMIT, W_LIMIT);
+  const rounded = (v) => clamp(Math.round(v / spec.step) * spec.step, spec.min, spec.max);
   const close = () => { closed.current = true; onClose(); };
   const finish = () => {
     if (closed.current) return;
     const v = read(text);
-    if (v != null && rounded(v) !== value) onSet(rounded(v));
+    if (text !== first.current && v != null && rounded(v) !== value) onSet(rounded(v));       // (what was not typed in stays as it is: 66.7 is shown as 67)
     close();
   };
-  const nudge = (d) => { const v = rounded((read(text) ?? value) + d); setText(num(v)); onSet(v); };
+  const nudge = (d) => { const v = rounded((read(text) ?? value) + d); setText(num(v, spec.digits)); onSet(v); };
+  const putBack = () => { onSet(spec.reset); close(); };
   const keep = (e) => e.preventDefault();                         // pressing a button must not take the focus from the number
   return (
     <div
@@ -323,19 +345,21 @@ function ChipEditor({ t, label, value, x, y, onSet, onClose }) {
     >
       <span className="chip-edit-label">{label}</span>
       <div className="chip-edit-row">
-        <button type="button" className="icon-btn small" onPointerDown={keep} onMouseDown={keep} onClick={() => nudge(-0.5)} aria-label={`${t.weights.less} (${MINUS}0,5)`} title={t.weights.less}><MinusIcon size={14} /></button>
+        <button type="button" className="icon-btn small" onPointerDown={keep} onMouseDown={keep} onClick={() => nudge(-spec.step)} aria-label={`${t.weights.less} (${MINUS}${num(spec.step)})`} title={t.weights.less}><MinusIcon size={14} /></button>
         <input
           ref={input} type="text" inputMode="decimal" className="num" aria-label={`${t.weights.typed}, ${label}`} value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); finish(); }
             else if (e.key === 'Escape') { e.preventDefault(); close(); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); nudge(0.5); }
-            else if (e.key === 'ArrowDown') { e.preventDefault(); nudge(-0.5); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); nudge(spec.step); }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); nudge(-spec.step); }
           }}
         />
-        <button type="button" className="icon-btn small" onPointerDown={keep} onMouseDown={keep} onClick={() => nudge(0.5)} aria-label={`${t.weights.more} (+0,5)`} title={t.weights.more}><PlusIcon size={14} /></button>
+        <button type="button" className="icon-btn small" onPointerDown={keep} onMouseDown={keep} onClick={() => nudge(spec.step)} aria-label={`${t.weights.more} (+${num(spec.step)})`} title={t.weights.more}><PlusIcon size={14} /></button>
       </div>
+      {hint && <span className="chip-edit-hint">{hint}</span>}
+      {spec.reset != null && <button type="button" className="link-btn" onPointerDown={keep} onMouseDown={keep} onClick={putBack}>{t.ctl.reset} : {num(spec.reset, 0)}</button>}
     </div>
   );
 }

@@ -13,12 +13,12 @@ test('the readings, the weights and the settings are what the robot said last', 
   tele.push({ type: 'hello', t: 100 });
   tele.push({ type: 'n', state: 'drive', prox: [1, 2, 3, 4, 5, 6, 7], motors: [66, 66], learnt: 0, t: 120 });
   tele.push(w([0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]));
-  tele.push({ type: 'p', step: 3, base: 66.7, forget: 16 });
+  tele.push({ type: 'p', step: 3, baseLeft: 66.7, baseRight: 66.7, forget: 16 });
   await flush();
   const s = tele.getSnapshot();
   assert.equal(s.running, true);
   assert.deepEqual(s.prox, [1, 2, 3, 4, 5, 6, 7]);
-  assert.deepEqual(s.params, { step: 3, base: 66.7, forget: 16 });
+  assert.deepEqual(s.params, { step: 3, baseLeft: 66.7, baseRight: 66.7, forget: 16 });
   assert.equal(s.t, 120);
   assert.equal(published, 1, 'one snapshot for a burst of events');
 });

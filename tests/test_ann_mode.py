@@ -20,7 +20,7 @@ from fake_ann_robot import VirtualRobot, Wall, load, prox_from_distance  # noqa:
 SOURCE = open(os.path.join(HERE, "..", "src", "py", "ann_mode.py")).read()
 
 # items of the interface's messages (see rx_poll in the mode)
-KEY_WL, KEY_WR, KEY_STEP, KEY_SPEED, KEY_FORGET, KEY_CMD = 0, 7, 16, 17, 18, 19
+KEY_WL, KEY_WR, KEY_BASE_L, KEY_BASE_R, KEY_STEP, KEY_FORGET, KEY_CMD = 0, 7, 14, 15, 16, 18, 19
 CMD_RESET, CMD_PAUSE, CMD_RESUME, CMD_FREEZE, CMD_LEARN, CMD_QUIT, CMD_REPORT = 1, 2, 3, 4, 5, 6, 7
 
 
@@ -172,17 +172,23 @@ class Interface(unittest.TestCase):
 
     def test_set_a_weight_and_the_settings(self):
         r = VirtualRobot()
-        items = [(KEY_WL + 0, 45), (KEY_WR + 4, -25), (KEY_STEP, 50), (KEY_SPEED, 100), (KEY_FORGET, 0)]
+        items = [(KEY_WL + 0, 45), (KEY_WR + 4, -25), (KEY_STEP, 50), (KEY_BASE_L, 1000), (KEY_BASE_R, 700), (KEY_FORGET, 0)]
         self.feed(r, {10: encode(items, 3)})
         run(r, 60)
         wl, wr = weights(r.last_lines("w"))
         self.assertEqual(wl[0], 45)
         self.assertEqual(wr[4], -25)
-        self.assertEqual(r.last_lines("p")[-1], "@@p 50 1000 0")
+        self.assertEqual(r.last_lines("p")[-1], "@@p 50 1000 700 0")
         self.assertEqual(r.last_lines("ack"), ["@@ack 3"])
-        self.assertEqual(r.last["speed"], (100, 100))                 # the speed 100 -> the bias 3000
+        self.assertEqual(r.last["speed"], (100, 70))                  # each wheel has its own base speed: 100 and 70
         # the mode's own lights took the frame's place at the tick that read it
         self.assertNotEqual(r.rgb[0][1], 15)
+
+    def test_each_wheel_can_start_with_its_own_base_speed(self):
+        r = VirtualRobot()
+        run(r, 40, "30, 667, 16, '', 400")
+        self.assertEqual(r.last_lines("p")[-1], "@@p 30 667 400 16")
+        self.assertEqual(r.last["speed"], (66, 40))                   # the firmware's 66.7 on the left, 40 on the right
 
     def test_a_negative_value_and_many_items_in_eight_frames(self):
         r = VirtualRobot()
@@ -341,7 +347,7 @@ def scenario(seed):
             msgs[t + i] = f
 
     add(300, [(KEY_WL, 45), (KEY_WR + 4, -25), (KEY_STEP, 50)])
-    add(1200, [(KEY_SPEED, 90), (KEY_FORGET, 5), (KEY_WL + 2, -70)])
+    add(1200, [(KEY_BASE_L, 900), (KEY_BASE_R, 700), (KEY_FORGET, 5), (KEY_WL + 2, -70)])
     add(1800, [(KEY_CMD, CMD_FREEZE)])
     add(2000, [(KEY_CMD, CMD_LEARN), (KEY_STEP, 20)])
     add(2400, [(KEY_CMD, CMD_RESET), (KEY_WR + 1, 33)])

@@ -56,7 +56,7 @@ test('connect, install the module once, start the mode: the robot says hello and
   assert.ok(l.events.some((e) => e.type === 'hello'));
   await until(() => l.last('w') && l.last('p') && l.last('n'));
   assert.deepEqual(l.last('w').left, [0, 0, 0, 0, 0, 0, 0]);
-  assert.deepEqual(l.last('p'), { type: 'p', step: 3, base: 66.7, forget: 16, t: l.last('p').t });
+  assert.deepEqual(l.last('p'), { type: 'p', step: 3, baseLeft: 66.7, baseRight: 66.7, forget: 16, t: l.last('p').t });
   assert.equal(l.last('n').state, 'drive');
   assert.ok(fake.listFiles && window.fakeRobot.files.includes(`${MODULE.name}.py`), 'the module is on the robot');
   assert.ok(l.log.some(([, t]) => /launcher/.test(t)), 'started by the two-line launcher');
@@ -68,11 +68,12 @@ test('a weight and a setting are changed in the running mode and acknowledged', 
   const l = await connected();
   await l.core.start({});
   await until(() => l.last('w'));
-  await l.core.apply({ left: { 0: 4.5 }, right: { 4: -2 }, step: 5, base: 90 });
+  await l.core.apply({ left: { 0: 4.5 }, right: { 4: -2 }, step: 5, baseLeft: 90, baseRight: 70 });
   await until(() => l.last('w').left[0] === 4.5);
   assert.equal(l.last('w').right[4], -2);
   await until(() => l.last('p').step === 5);
-  assert.equal(l.last('p').base, 90);
+  assert.equal(l.last('p').baseLeft, 90);
+  assert.equal(l.last('p').baseRight, 70, 'each wheel has its own base speed');
   assert.ok(l.last('live-ok'), 'acknowledged');
   assert.ok(l.events.some((e) => e.type === 'ack'));
   // the wheels follow the new speed (the demonstration robot gives them 0 at the command, and the mode gives them again)
@@ -158,6 +159,6 @@ test('the store follows the events, and keeps a history', async () => {
 });
 
 test('runArgs: the arguments of the launcher', () => {
-  assert.equal(runArgs({}), '30, 667, 16, ""');
-  assert.equal(runArgs({ step: 5, base: 90, forget: 0, weights: { left: [1, 0, 0, 0, 0, 0, -2.5], right: [0, 0, 0, 0, 0, 0, 0] } }), '50, 900, 0, "10,0,0,0,0,0,-25,0,0,0,0,0,0,0"');
+  assert.equal(runArgs({}), '30, 667, 16, "", 667');
+  assert.equal(runArgs({ step: 5, baseLeft: 90, baseRight: 70, forget: 0, weights: { left: [1, 0, 0, 0, 0, 0, -2.5], right: [0, 0, 0, 0, 0, 0, 0] } }), '50, 900, 0, "10,0,0,0,0,0,-25,0,0,0,0,0,0,0", 700');
 });

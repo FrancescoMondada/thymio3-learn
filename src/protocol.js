@@ -21,7 +21,7 @@ const finite = (a) => a.every(Number.isFinite);
 // One line of stdout -> an event, or null for anything else (print() of other scripts, noise).
 //   @@n state p0..p6 left right learnt   every 100 ms
 //   @@w l0..l6 r0..r6                    the weights, in tenths, when they change (and every 3 s)
-//   @@p step speed forget                the settings: learning step and speed in tenths, forgetting in seconds
+//   @@p step baseL baseR forget          the settings: learning step and the speed of each wheel with nothing in front, in tenths; forgetting in seconds
 //   @@hit mask                           a collision: bit i = sensor i was over the threshold
 //   @@learn n / @@forget n               the weights were just changed by a lesson / by forgetting; n lessons held
 //   @@ack msg                            the message of the interface was applied
@@ -48,9 +48,9 @@ export function parseRobotLine(line) {
       return { type: 'w', left: v.slice(0, 7).map((x) => x / 10), right: v.slice(7, 14).map((x) => x / 10) };
     }
     case 'p': {
-      const v = ints(a, 3);
-      if (v.length < 3 || !finite(v)) return null;
-      return { type: 'p', step: v[0] / 10, base: v[1] / 10, forget: v[2] };
+      const v = ints(a, 4);
+      if (v.length < 4 || !finite(v)) return null;
+      return { type: 'p', step: v[0] / 10, baseLeft: v[1] / 10, baseRight: v[2] / 10, forget: v[3] };
     }
     case 'hit': { const mask = Number(a[0]) || 0; return { type: 'hit', mask, sensors: Array.from({ length: 7 }, (_, i) => !!(mask & (1 << i))) }; }
     case 'learn': return { type: 'learn', count: Number(a[0]) || 0 };
@@ -68,8 +68,10 @@ export function parseRobotLine(line) {
 // channel of the four body LEDs: 0 message number, 1 always 15 (the mode never writes 15 on that channel),
 // 2 last-frame flag (8) + frame number, 3..10 eight nibbles of the message, 11 checksum. The message: the
 // number of items (two nibbles), then the items, five nibbles each: a key (two) and a value (three, signed
-// 12 bits). At most eight frames: 12 items.
-export const KEY = { LEFT: 0, RIGHT: 7, STEP: 16, SPEED: 17, FORGET: 18, COMMAND: 19 };
+// 12 bits). At most eight frames: 12 items. Keys: 0..6 and 7..13 the weights of the sensors towards the left
+// and the right wheel (tenths), 14 and 15 the weight of the constant input "1" towards each wheel, which is the
+// speed of that wheel with nothing in front (tenths of speed), 16 learning step (tenths), 18 forgetting (s).
+export const KEY = { LEFT: 0, RIGHT: 7, BASE_LEFT: 14, BASE_RIGHT: 15, STEP: 16, FORGET: 18, COMMAND: 19 };
 export const CMD = { RESET: 1, PAUSE: 2, RESUME: 3, FREEZE: 4, LEARN: 5, QUIT: 6, REPORT: 7 };
 export const LIVE_MARK = 15;
 export const MAX_FRAMES = 8;
@@ -81,7 +83,7 @@ export const isFrame = (n) => !!n && n.length === 12 && n[1] === LIVE_MARK && fr
 // The items that say a weight, a setting or a command. A weight is in the firmware's unit, sent in tenths.
 export const weightItem = (side, sensor, w) => [(side === 'right' ? KEY.RIGHT : KEY.LEFT) + sensor, Math.max(-1000, Math.min(1000, Math.round(w * 10)))];
 export const stepItem = (step) => [KEY.STEP, Math.max(0, Math.min(200, Math.round(step * 10)))];
-export const speedItem = (base) => [KEY.SPEED, Math.max(0, Math.min(500, Math.round(base)))];
+export const baseItem = (side, base) => [side === 'right' ? KEY.BASE_RIGHT : KEY.BASE_LEFT, Math.max(0, Math.min(2000, Math.round(base * 10)))];
 export const forgetItem = (seconds) => [KEY.FORGET, Math.max(0, Math.min(2000, Math.round(seconds)))];
 export const commandItem = (code) => [KEY.COMMAND, code];
 
@@ -157,7 +159,7 @@ export const liveActuator = (frame, { circle = new Array(8).fill(0), lego = 0, m
 export const liveNibbles = (a) => [a.flRGB, a.frRGB, a.blRGB, a.brRGB].flatMap((c) => [c.r, c.g, c.b]);
 
 // What the interface asks for, as the items of one or more messages. `change` is any of
-// { left: {i: w}, right: {i: w}, step, base, forget, command }; the weights come before the command, which
+// { left: {i: w}, right: {i: w}, step, baseLeft, baseRight, forget, command }; the weights come before the command, which
 // applies to the state the mode is in once they are set. Returns arrays of at most MAX_ITEMS items.
 export function itemsFor(change) {
   const items = [];
@@ -165,7 +167,8 @@ export function itemsFor(change) {
     for (const [i, w] of Object.entries(change[side] || {})) items.push(weightItem(side, Number(i), w));
   }
   if (change.step != null) items.push(stepItem(change.step));
-  if (change.base != null) items.push(speedItem(change.base));
+  if (change.baseLeft != null) items.push(baseItem('left', change.baseLeft));
+  if (change.baseRight != null) items.push(baseItem('right', change.baseRight));
   if (change.forget != null) items.push(forgetItem(change.forget));
   if (change.command != null) items.push(commandItem(change.command));
   const out = [];

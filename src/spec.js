@@ -3,13 +3,14 @@
 
 // The 7 proximity sensors, in the order of the firmware (PROXIMITY(0..6)). `angle` is where each one looks,
 // in degrees from the front of the robot, positive to the left; (x, y) is where it sits on the robot's
-// outline in millimetres, x to the right and y to the front (the robot is about 110 mm wide).
+// outline in millimetres, x to the right and y to the front (the robot is about 110 mm wide). The five in front are evenly
+// spaced along the nose: 27.5 mm from each other, and their directions 0, 28 and 55 degrees apart.
 export const SENSORS = [
-  { id: 0, name: 'left',        short: 'L',  angle: 55,   x: -42, y: 38 },
+  { id: 0, name: 'left',        short: 'L',  angle: 55,   x: -47, y: 30 },
   { id: 1, name: 'front-left',  short: 'FL', angle: 28,   x: -27, y: 49 },
   { id: 2, name: 'front',       short: 'F',  angle: 0,    x: 0,   y: 54 },
   { id: 3, name: 'front-right', short: 'FR', angle: -28,  x: 27,  y: 49 },
-  { id: 4, name: 'right',       short: 'R',  angle: -55,  x: 42,  y: 38 },
+  { id: 4, name: 'right',       short: 'R',  angle: -55,  x: 47,  y: 30 },
   { id: 5, name: 'back-left',   short: 'BL', angle: 180,  x: -25, y: -52 },
   { id: 6, name: 'back-right',  short: 'BR', angle: 180,  x: 25,  y: -52 },
 ];

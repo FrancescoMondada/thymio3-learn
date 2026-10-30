@@ -47,7 +47,8 @@ const bare = (name) => String(name).replace(/^\/+/, '');
 // The two lines that start the installed mode, and the arguments that carry the state to start from.
 export const runArgs = (init = {}) => {
   const w = init.weights ? [...init.weights.left, ...init.weights.right].map((x) => Math.round(x * 10)).join(',') : '';
-  return `${Math.round((init.step ?? 3) * 10)}, ${init.base != null ? Math.round(init.base * 10) : 667}, ${Math.round(init.forget ?? 16)}, "${w}"`;
+  const base10 = (v) => (v != null ? Math.round(v * 10) : 667);
+  return `${Math.round((init.step ?? 3) * 10)}, ${base10(init.baseLeft)}, ${Math.round(init.forget ?? 16)}, "${w}", ${base10(init.baseRight)}`;
 };
 
 // Changes that wait to be sent: merged while they carry no command (a command applies to the weights that came before it).
@@ -55,7 +56,7 @@ export function mergeChange(list, change) {
   const last = list[list.length - 1];
   if (!last || last.command != null) { list.push(cloneChange(change)); return list; }
   for (const side of ['left', 'right']) if (change[side]) last[side] = { ...(last[side] || {}), ...change[side] };
-  for (const k of ['step', 'base', 'forget']) if (change[k] != null) last[k] = change[k];
+  for (const k of ['step', 'baseLeft', 'baseRight', 'forget']) if (change[k] != null) last[k] = change[k];
   if (change.command != null) last.command = change.command;
   return list;
 }
@@ -191,7 +192,7 @@ export class RobotBackendCore {
     if (ev.type === 'hello') { this.modeRunning = true; this.failures = 0; }
     else if (ev.type === 'bye' || ev.type === 'exit') this.modeRunning = false;
     if (ev.type === 'w') this.known.weights = { left: [...ev.left], right: [...ev.right] };
-    else if (ev.type === 'p') this.known.params = { step: ev.step, base: ev.base, forget: ev.forget };
+    else if (ev.type === 'p') this.known.params = { step: ev.step, baseLeft: ev.baseLeft, baseRight: ev.baseRight, forget: ev.forget };
     else if (ev.type === 'n') this.motors = ev.motors;
     this.emit(ev);
   }
@@ -416,7 +417,7 @@ export class RobotBackendCore {
     await hello;
   }
 
-  // Start the mode on the robot, from these weights and settings (`init`: { weights: {left, right}, step, base, forget }, all
+  // Start the mode on the robot, from these weights and settings (`init`: { weights: {left, right}, step, baseLeft, baseRight, forget }, all
   // optional). Resolves when the mode has said hello.
   start(init = {}) {
     return this.enqueue('start', async () => {
@@ -453,7 +454,7 @@ export class RobotBackendCore {
   }
 
   // ---- changing the weights and the settings of the mode that runs -------------------------------------
-  // `change`: { left: {sensor: w}, right: {sensor: w}, step, base, forget, command }. Changes that come quickly (a slider
+  // `change`: { left: {sensor: w}, right: {sensor: w}, step, baseLeft, baseRight, forget, command }. Changes that come quickly (a slider
   // that is dragged) are merged and sent together, a message after another, each answered by the mode ("@@ack n").
   apply(change) {
     if (!this.connected || !this.modeRunning) return Promise.resolve();
@@ -502,7 +503,8 @@ export class RobotBackendCore {
       if (key < 7 && init.weights) init.weights.left[key] = v / 10;
       else if (key < 14 && init.weights) init.weights.right[key - 7] = v / 10;
       else if (key === KEY.STEP) init.step = v / 10;
-      else if (key === KEY.SPEED) init.base = v;
+      else if (key === KEY.BASE_LEFT) init.baseLeft = v / 10;
+      else if (key === KEY.BASE_RIGHT) init.baseRight = v / 10;
       else if (key === KEY.FORGET) init.forget = v;
       else if (key === KEY.COMMAND && v === CMD.RESET && init.weights) init.weights = { left: new Array(7).fill(0), right: new Array(7).fill(0) };
     }

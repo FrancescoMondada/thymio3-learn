@@ -9,6 +9,8 @@ const COLLISION = 3300;
 const SENSOR_SCALE = 20;
 const MOTOR_SCALE = 30;
 const BIAS = 2000;
+// the bias weight that gives a wheel this speed (in tenths) with nothing in front: speed * 30
+const biasOf = (base10) => (base10 === 667 ? BIAS : base10 * 3);
 const BACK_SPEED = -200;
 const BACK_MS = 1000;
 const LEARN_MS = 300;
@@ -33,16 +35,15 @@ class Edge {
 
 export class AnnMode {
   // step10: the learning step in tenths, base10: the speed with nothing in front, in tenths (667 = the firmware's
-  // 2000 / 30), forgetS: seconds between two forgettings (0: never), weights: the 14 weights in tenths, as the
-  // string "l0,...,l6,r0,...,r6" or an array, or ''.
-  constructor({ step10 = 30, base10 = 667, forgetS = 16, weights = '' } = {}) {
+  // 2000 / 30; the left wheel's, and the right wheel's too unless base10r is given), forgetS: seconds between two
+  // forgettings (0: never), weights: the 14 weights in tenths, as the string "l0,...,l6,r0,...,r6" or an array, or ''.
+  constructor({ step10 = 30, base10 = 667, forgetS = 16, weights = '', base10r = null } = {}) {
     this.lr = step10 / 10;
-    this.bias = base10 === 667 ? BIAS : base10 * 3;
     this.forgetMs = forgetS * 1000;
     this.wl = new Array(8).fill(0);
     this.wr = new Array(8).fill(0);
-    this.wl[7] = this.bias;
-    this.wr[7] = this.bias;
+    this.wl[7] = biasOf(base10);
+    this.wr[7] = biasOf(base10r ?? base10);
     const v = Array.isArray(weights) ? weights : String(weights || '').split(',').filter((s) => s !== '');
     if (v.length > 13) {
       for (let i = 0; i < 7; i++) {
@@ -99,7 +100,7 @@ export class AnnMode {
 
   // ---- reports --------------------------------------------------------------------------------
   reportWeights() { this.say('w', ...this.wl.slice(0, 7).map(tenths), ...this.wr.slice(0, 7).map(tenths)); }
-  reportParams() { this.say('p', tenths(this.lr), tenths(this.bias / MOTOR_SCALE), Math.floor(this.forgetMs / 1000)); }
+  reportParams() { this.say('p', tenths(this.lr), tenths(this.wl[7] / MOTOR_SCALE), tenths(this.wr[7] / MOTOR_SCALE), Math.floor(this.forgetMs / 1000)); }
   reportAll() { this.reportWeights(); this.reportParams(); this.beat = 0; }
 
   setState(state) {
@@ -176,12 +177,10 @@ export class AnnMode {
   item(key, v) {
     if (key < 7) this.wl[key] = clampW(v / 10);
     else if (key < 14) this.wr[key - 7] = clampW(v / 10);
+    else if (key === 14) this.wl[7] = biasOf(v > 0 ? v : 0);
+    else if (key === 15) this.wr[7] = biasOf(v > 0 ? v : 0);
     else if (key === 16) this.lr = (v > 0 ? v : 0) / 10;
-    else if (key === 17) {
-      this.bias = (v > 0 ? v : 0) * MOTOR_SCALE;
-      this.wl[7] = this.bias;
-      this.wr[7] = this.bias;
-    } else if (key === 18) {
+    else if (key === 18) {
       this.forgetMs = (v > 0 ? v : 0) * 1000;
       this.forgetTimer = 0;
     } else if (key === 19) this.command(v);

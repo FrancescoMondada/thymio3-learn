@@ -15,7 +15,7 @@ export class VirtualRobot {
     this.body = [0, 0, 0];
   }
 
-  // Start the mode: returns what it says at once. `init`: { step10, base10, forgetS, weights } as for AnnMode.
+  // Start the mode: returns what it says at once. `init`: { step10, base10, base10r, forgetS, weights } as for AnnMode.
   start(init = {}) {
     this.mode = new AnnMode(init);
     this.speed = [0, 0];

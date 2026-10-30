@@ -69,18 +69,18 @@ function stepOnce(r) {
   if (robot.mode?.quit) stopRun(false);
 }
 
-function startMode(step10, base10, forgetS, weights) {
+function startMode(step10, base10, forgetS, weights, base10r = null) {
   const r = { kind: 'mode', timer: 0 };
   run = r;
   setTimeout(() => {                                // the interpreter compiles the module and starts
     if (run !== r) return;
-    for (const l of robot.start({ step10, base10, forgetS, weights }).lines) say(l);
+    for (const l of robot.start({ step10, base10, base10r, forgetS, weights }).lines) say(l);
     r.timer = setInterval(() => stepOnce(r), 20 / flags.slow);
   }, 350);
 }
 
-const LAUNCHER = /^import (ann_\w+)\s+\1\.run\((\d+), (\d+), (\d+), "([-0-9,]*)"\)/m;
-const WHOLE = /\nrun\((\d+), (\d+), (\d+), "([-0-9,]*)"\)\s*$/;
+const LAUNCHER = /^import (ann_\w+)\s+\1\.run\((\d+), (\d+), (\d+), "([-0-9,]*)"(?:, (\d+))?\)/m;
+const WHOLE = /\nrun\((\d+), (\d+), (\d+), "([-0-9,]*)"(?:, (\d+))?\)\s*$/;
 
 function execute(script) {
   const launcher = LAUNCHER.exec(script);
@@ -91,9 +91,9 @@ function execute(script) {
       setTimeout(() => fire('thymio-python-execution-status', false), 100);
       return;
     }
-    startMode(Number(launcher[2]), Number(launcher[3]), Number(launcher[4]), launcher[5]);
+    startMode(Number(launcher[2]), Number(launcher[3]), Number(launcher[4]), launcher[5], launcher[6] != null ? Number(launcher[6]) : null);
   } else if (whole && script.includes('def run(')) {
-    startMode(Number(whole[1]), Number(whole[2]), Number(whole[3]), whole[4]);
+    startMode(Number(whole[1]), Number(whole[2]), Number(whole[3]), whole[4], whole[5] != null ? Number(whole[5]) : null);
   } else if (script.includes('@@test start')) {
     run = { kind: 'test', timer: 0 };
     print('@@test start\r\n', true);

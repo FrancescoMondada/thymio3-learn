@@ -3,7 +3,7 @@
 Une page web pour **regarder et régler l'apprentissage du Thymio 3**: le mode « réseau de neurones » du
 firmware (le mode blanc, `main/ann.c`), où le robot apprend à éviter les obstacles en se cognant. La page
 montre le réseau qui apprend, ses 16 poids qui bougent, l'activité des capteurs, des connexions et des
-roues, et laisse changer à la main les poids, la vitesse d'apprentissage, la vitesse du robot et l'oubli.
+roues, et laisse changer à la main les poids (dont la vitesse du robot), la vitesse d'apprentissage et l'oubli.
 
 Pensée pour des élèves d'environ 12 ans: du texte, de vrais nombres, un style sobre (sombre ou clair),
 alors que [thymio3-cards](../thymio3-cards) vise les plus petits avec des pictogrammes. Même base technique
@@ -21,7 +21,9 @@ x[i] = lecture[i] / 20         x[7] = 1 (le biais)
 roue = (x[0]·w[0] + … + x[6]·w[6] + x[7]·w[7]) / 30
 ```
 
-Le poids du biais (2000) est la vitesse du robot quand rien n'est devant lui: 2000 / 30 = 66.
+Le poids du biais (2000) est la vitesse du robot quand rien n'est devant lui: 2000 / 30 = 66. Il y en a **deux**, un par roue (le firmware en a
+autant: 16 poids en tout), et ils peuvent différer: un robot dont les deux roues n'ont pas la même base tourne en rond. Dans l'interface
+on les voit comme ce qu'ils sont, **l'entrée « 1 »** et ses deux poids, exprimés directement en vitesse (2000 / 30 = 67).
 
 - **Avance** (blanc qui pulse): le réseau conduit. Si un capteur avant dépasse **3300**, c'est un choc.
 - **Recule** (rouge): 1 s à −200, en mémorisant quels capteurs ont touché.
@@ -54,20 +56,26 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
   - **Les 7 capteurs** sont sur son nez, numérotés, remplis par ce qu'ils lisent, chacun avec son **cône**: sa longueur est la distance
     que la lecture représente (`distanceFromProx` dans `src/spec.js`), donc **lecture basse = objet loin = grand cône** (pâle quand il
     ne voit rien), lecture haute = objet près = petit cône marqué; le nombre au bout est la lecture (0 à 4095). Un anneau rouge = choc.
-  - **La vitesse de base** (la constante 1) est sur le talon; **les deux neurones « + »** sont dans le corps, chacun à côté de sa roue.
-    Un neurone additionne la vitesse de base et ce qu'apporte chaque capteur, et envoie le résultat à **sa roue**: un pneu dont les
+  - **L'entrée « 1 »** (« Toujours 1 ») est sur le talon, avec ses deux connexions: **le poids de chacune est la vitesse de cette roue
+    quand rien n'est devant le robot** (67, la vitesse du robot du fabricant). Il n'y a plus de curseur « vitesse du robot » dans la barre:
+    on touche le 67 sur le robot, on tape un autre nombre (0 à 200, des unités entières) ou on remet la valeur du fabricant. Les deux se
+    règlent séparément. **Les deux neurones « + »** sont dans le corps, chacun à côté de sa roue.
+    Un neurone additionne ce qu'apporte chaque capteur et ce qu'apporte l'entrée « 1 », et envoie le résultat à **sa roue**: un pneu dont les
     rainures avancent ou reculent à une vitesse **exactement proportionnelle** à celle de la roue, avec le nombre à côté.
-  - **16 connexions** relient les capteurs et la base aux neurones, d'autant plus épaisses que leur poids est grand; **bleu** = elle
+  - **16 connexions** relient les capteurs et l'entrée « 1 » aux neurones, d'autant plus épaisses que leur poids est grand; **bleu** = elle
     accélère la roue, **rouge** = elle freine, les deux finissent par une flèche qui s'arrête un peu avant le neurone; ce qui coule dessus
     est la vitesse que ce capteur ajoute à cette roue à cet instant. Un poids qui change clignote.
     **Le nombre sur un trait est le poids: on le touche et on tape un autre nombre** (Entrée ou un clic ailleurs valide, Échap annule,
-    les flèches haut/bas ou − / + font un demi-cran). Il n'y a pas de curseur pour les poids; la vitesse de base se règle avec le curseur
-    « vitesse du robot ».
+    les flèches haut/bas ou − / + font un demi-cran, un cran entier pour la vitesse de base). Il n'y a pas de curseur pour les poids.
+  - **Le robot et le réseau ne se confondent pas**: le robot (silhouette, plots Lego, boutons) est dessiné en **gris-bleu pâle**, comme un
+    fond; le réseau est au premier plan: neurones blancs cerclés de noir, traits bleus ou rouges, nombres sur fond blanc, capteurs en
+    couleur. Les nombres des connexions sont au-dessus de tous les traits, pour qu'on puisse toujours les toucher. Les cinq capteurs
+    de devant sont **à égale distance** les uns des autres (27,5 mm, `src/spec.js`).
 - **La barre du haut** (deux lignes, toujours visible sur un grand écran; il n'y a plus de colonne à droite): la première a l'icône de
   l'application (elle ouvre les paramètres), le titre, robot virtuel ou réel et le bouton pour connecter un Thymio (avec un robot
   réel: son nom, qui porte le numéro de série, et sa batterie, à côté du bouton);
   la seconde a **les commandes**: l'interrupteur « Apprentissage » (le robot apprend ou non), tout oublier, un menu de quatre cerveaux
-  tout faits (vierge, évite, attiré, prudent), pause, et les trois curseurs (vitesse d'apprentissage, vitesse du robot, oubli: jamais
+  tout faits (vierge, évite, attiré, prudent), pause, et les deux curseurs (vitesse d'apprentissage, oubli: jamais
   ou toutes les n s). Rien n'est enregistré. Rien ne bouge dans la barre quand l'état du robot change: la confirmation « reçu par le
   robot » est une petite coche dans la marge de droite (le texte est son infobulle). Sur un écran étroit les commandes sont l'onglet
   « Réglages » / « Controls ».
@@ -106,8 +114,8 @@ toutes les 20 ms et qui écrit les LED du corps; MicroPython **relit** ces LED (
   pas, la vitesse, l'oubli et les 14 poids de départ. Sans module, le mode entier est envoyé.
 - **Robot → page** (`parseRobotLine` dans `src/protocol.js`):
   `@@n état p0..p6 gauche droite leçons` toutes les 100 ms; `@@w` (14 poids, en dixièmes) à chaque changement et toutes les 3 s;
-  `@@p pas vitesse oubli`; `@@hit masque` (quels capteurs ont touché); `@@learn n`; `@@forget n`; `@@ack n`; `@@state`, `@@exit`, `@@bye`.
-- **Page → robot**: un message est une suite d'objets (clé + valeur de 12 bits: un poids en dixièmes, le pas, la vitesse,
+  `@@p pas vitesseG vitesseD oubli` (vitesse de chaque roue sans obstacle); `@@hit masque` (quels capteurs ont touché); `@@learn n`; `@@forget n`; `@@ack n`; `@@state`, `@@exit`, `@@bye`.
+- **Page → robot**: un message est une suite d'objets (clé + valeur de 12 bits: un poids en dixièmes, le pas, la vitesse de base de chaque roue (clés 14 et 15, en dixièmes),
   l'oubli, une commande: tout oublier / pause / reprendre / geler / apprendre / quitter), écrite dans les LED en 1 à 8 trames de douze valeurs de 4 bits
   (numéro de message, marqueur à 15, numéro de trame, huit demi-octets, somme de contrôle). Le mode répond `@@ack n`. Un curseur
   qu'on glisse envoie peu de messages: les changements rapprochés sont fusionnés. Un message sans réponse en 0,8 s est renvoyé

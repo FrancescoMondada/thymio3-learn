@@ -22,7 +22,8 @@ export class SimBackend {
   start(init = {}) {
     const out = this.robot.start({
       step10: Math.round((init.step ?? DEFAULT_STEP) * 10),
-      base10: init.base != null ? Math.round(init.base * 10) : 667,
+      base10: init.baseLeft != null ? Math.round(init.baseLeft * 10) : 667,
+      base10r: init.baseRight != null ? Math.round(init.baseRight * 10) : null,
       forgetS: init.forget ?? DEFAULT_FORGET,
       weights: init.weights ? [...init.weights.left, ...init.weights.right].map((w) => Math.round(w * 10)) : '',
     });

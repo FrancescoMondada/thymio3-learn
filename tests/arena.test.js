@@ -74,10 +74,10 @@ test('the interface changes a running virtual robot through the same messages as
   const events = [];
   const sim = new SimBackend((e) => events.push(e));
   sim.start();
-  sim.apply({ left: { 3: 7.5 }, step: 5, base: 120 });
+  sim.apply({ left: { 3: 7.5 }, step: 5, baseLeft: 120, baseRight: 90 });
   for (let i = 0; i < 100; i++) sim.advance(20);
   assert.equal(events.filter((e) => e.type === 'w').at(-1).left[3], 7.5);
-  assert.deepEqual(events.filter((e) => e.type === 'p').at(-1), { type: 'p', step: 5, base: 120, forget: 16, t: events.filter((e) => e.type === 'p').at(-1).t });
+  assert.deepEqual(events.filter((e) => e.type === 'p').at(-1), { type: 'p', step: 5, baseLeft: 120, baseRight: 90, forget: 16, t: events.filter((e) => e.type === 'p').at(-1).t });
   assert.ok(events.some((e) => e.type === 'ack'));
   sim.apply({ command: 7 });
   sim.stop();

@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  parseRobotLine, LineAssembler, encodeMessage, FrameReceiver, itemsFor, liveActuator, liveNibbles, weightItem, stepItem, speedItem, forgetItem, commandItem,
+  parseRobotLine, LineAssembler, encodeMessage, FrameReceiver, itemsFor, liveActuator, liveNibbles, weightItem, stepItem, baseItem, forgetItem, commandItem,
   KEY, CMD, MAX_ITEMS, frameSum, isFrame,
 } from '../src/protocol.js';
 import { minify, hash32, moduleNameFor, buildModuleFrom } from '../src/script-core.js';
@@ -20,7 +20,7 @@ test('the lines of the robot become events', () => {
   const w = parseRobotLine('@@w 30 -30 0 0 0 0 5 -30 30 0 0 0 0 -15');
   assert.deepEqual(w.left, [3, -3, 0, 0, 0, 0, 0.5]);
   assert.deepEqual(w.right, [-3, 3, 0, 0, 0, 0, -1.5]);
-  assert.deepEqual(parseRobotLine('@@p 30 667 16'), { type: 'p', step: 3, base: 66.7, forget: 16 });
+  assert.deepEqual(parseRobotLine('@@p 30 667 400 16'), { type: 'p', step: 3, baseLeft: 66.7, baseRight: 40, forget: 16 });
   assert.deepEqual(parseRobotLine('@@hit 5'), { type: 'hit', mask: 5, sensors: [true, false, true, false, false, false, false] });
   assert.deepEqual(parseRobotLine('@@learn 3'), { type: 'learn', count: 3 });
   assert.deepEqual(parseRobotLine('@@ack 7'), { type: 'ack', msg: 7 });
@@ -72,14 +72,15 @@ test('frames that are wrong or incomplete apply nothing', () => {
 });
 
 test('what the interface asks for becomes items: weights first, then the settings, then the command', () => {
-  assert.deepEqual(itemsFor({ left: { 2: -3.5 }, right: { 0: 12 }, step: 4.5, base: 90, forget: 0, command: CMD.RESET }), [[[2, -35], [7, 120], [KEY.STEP, 45], [KEY.SPEED, 90], [KEY.FORGET, 0], [KEY.COMMAND, CMD.RESET]]]);
+  assert.deepEqual(itemsFor({ left: { 2: -3.5 }, right: { 0: 12 }, step: 4.5, baseLeft: 90, baseRight: 70, forget: 0, command: CMD.RESET }), [[[2, -35], [7, 120], [KEY.STEP, 45], [KEY.BASE_LEFT, 900], [KEY.BASE_RIGHT, 700], [KEY.FORGET, 0], [KEY.COMMAND, CMD.RESET]]]);
   const all = { left: Object.fromEntries(Array.from({ length: 7 }, (_, i) => [i, i])), right: Object.fromEntries(Array.from({ length: 7 }, (_, i) => [i, -i])) };
   const messages = itemsFor(all);
   assert.deepEqual(messages.map((m) => m.length), [12, 2], '14 weights are two messages');
   assert.deepEqual(weightItem('right', 6, -100), [13, -1000]);
   assert.deepEqual(weightItem('left', 0, 500), [0, 1000], 'a weight is limited to 100');
   assert.deepEqual(stepItem(-1), [KEY.STEP, 0]);
-  assert.deepEqual(speedItem(999), [KEY.SPEED, 500]);
+  assert.deepEqual(baseItem('left', 999), [KEY.BASE_LEFT, 2000], 'a base speed is limited to 200');
+  assert.deepEqual(baseItem('right', 66.7), [KEY.BASE_RIGHT, 667]);
   assert.deepEqual(forgetItem(16.4), [KEY.FORGET, 16]);
   assert.deepEqual(commandItem(CMD.PAUSE), [KEY.COMMAND, 2]);
 });

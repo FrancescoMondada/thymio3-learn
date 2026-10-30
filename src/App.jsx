@@ -62,7 +62,7 @@ export default function App() {
   // ---- the virtual robot's clock ---------------------------------------------------------------------
   const initFromSettings = () => {
     const p = tele.current.s.params;
-    return { step: p.step, base: p.base, forget: p.forget };
+    return { step: p.step, baseLeft: p.baseLeft, baseRight: p.baseRight, forget: p.forget };
   };
   useEffect(() => { sim.current.speed = simSpeed; }, [simSpeed]);
   useEffect(() => {
@@ -156,6 +156,7 @@ export default function App() {
   }, []);
 
   const setWeight = useCallback((sensor, wheel, w) => send({ [wheel === 0 ? 'left' : 'right']: { [sensor]: w } }), [send]);
+  const setBase = useCallback((wheel, v) => send({ [wheel === 0 ? 'baseLeft' : 'baseRight']: v }), [send]);
   const applyPreset = useCallback((p) => send(weightChange(p.left, p.right)), [send]);
 
   const selfTest = useCallback(async () => {
@@ -252,14 +253,15 @@ export default function App() {
             </header>
             <div ref={netRef} className="net-wrap">
               <Network
-                t={t} weights={brainNow} prox={snap.prox} motors={snap.motors} base={snap.params.base} hit={snap.lastHit} now={snap.t} changed={snap.changed}
-                enabled={enabled} onSetWeight={setWeight} vertical={vertical}
+                t={t} weights={brainNow} prox={snap.prox} motors={snap.motors} bases={[snap.params.baseLeft, snap.params.baseRight]} hit={snap.lastHit} now={snap.t} changed={snap.changed}
+                enabled={enabled} onSetWeight={setWeight} onSetBase={setBase} vertical={vertical}
               />
             </div>
             <ul className="net-legend">
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-pos" /><path d="M20,2 L30,7 L20,12 Z" className="c-pos" /></svg>{t.net.legendPos}</li>
               <li><svg width="34" height="14" aria-hidden="true"><path d="M2,7 H22" className="l-neg" /><path d="M20,2 L30,7 L20,12 Z" className="c-neg" /></svg>{t.net.legendNeg}</li>
               <li><svg width="34" height="22" aria-hidden="true"><path d="M2,11 L32,1 A32,32 0 0 1 32,21 Z" className="l-cone" /><circle cx="4" cy="11" r="3.5" className="l-cone-dot" /></svg>{t.net.legendCone}</li>
+              <li><svg width="34" height="22" aria-hidden="true" className="l-base"><rect x="3" y="2" width="28" height="18" rx="9" /><text x="17" y="12" textAnchor="middle" dominantBaseline="central">1</text></svg>{t.net.legendBase}</li>
             </ul>
             <p className="muted small formula">{t.net.formula} {t.net.pick}</p>
             <details className="rule">

@@ -10,7 +10,7 @@
 #     x[i] = proximity[i] / 20,   x[7] = 1 (the bias)
 #     wheel = (x[0]*w[0] + ... + x[6]*w[6] + x[7]*w[7]) / 30
 #
-# The bias weight is the speed of the robot when nothing is in front of it (2000 / 30 = 66).
+# The bias weight of a wheel is its speed when nothing is in front of the robot (2000 / 30 = 66); the two can differ.
 # The robot drives; when a front sensor goes over COLLISION it has hit something: it backs up for
 # a second, and then learns, once, from the sensors that were over the threshold: on the left side
 # the left wheel is pushed up and the right wheel down, so that next time the same reading makes the
@@ -34,7 +34,7 @@
 # The interface and the robot talk through stdout and the four body LEDs:
 #   robot -> interface  "@@word ..." lines, see say(). Every 100 ms: @@n state p0..p6 left right learnt.
 #                       When something changes (and every 3 s): @@w wl0..wl6 wr0..wr6 (tenths),
-#                       @@p step baseSpeed forgetSeconds (tenths, tenths, s).
+#                       @@p step baseLeft baseRight forgetSeconds (tenths, tenths, tenths, s).
 #   interface -> robot  rx_poll() below.
 import thymio
 import time
@@ -159,15 +159,19 @@ class Edge:
         return r
 
 
+def bias_of(base10):
+    # the bias weight that gives a wheel this speed (in tenths) with nothing in front: speed * 30
+    return BIAS if base10 == 667 else base10 * 3.0
+
+
 class Brain:
-    def __init__(self, step10, base10, forget_s, weights):
+    def __init__(self, step10, base10, forget_s, weights, base10r=None):
         self.lr = step10 / 10.0
-        self.bias = BIAS if base10 == 667 else base10 * 3.0
         self.forget_ms = forget_s * 1000
         self.wl = [0.0] * 8
         self.wr = [0.0] * 8
-        self.wl[7] = self.bias
-        self.wr[7] = self.bias
+        self.wl[7] = bias_of(base10)
+        self.wr[7] = bias_of(base10 if base10r is None else base10r)
         if weights:
             v = weights.split(",")
             for i in range(7):
@@ -221,7 +225,7 @@ class Brain:
         say("w", *[tenths(self.wl[i]) for i in range(7)] + [tenths(self.wr[i]) for i in range(7)])
 
     def report_params(self):
-        say("p", tenths(self.lr), tenths(self.bias / MOTOR_SCALE), self.forget_ms // 1000)
+        say("p", tenths(self.lr), tenths(self.wl[7] / MOTOR_SCALE), tenths(self.wr[7] / MOTOR_SCALE), self.forget_ms // 1000)
 
     def report_all(self):
         self.report_weights()
@@ -307,12 +311,12 @@ class Brain:
             self.wl[key] = clamp_w(v / 10.0)
         elif key < 14:
             self.wr[key - 7] = clamp_w(v / 10.0)
+        elif key == 14:
+            self.wl[7] = bias_of(v if v > 0 else 0)
+        elif key == 15:
+            self.wr[7] = bias_of(v if v > 0 else 0)
         elif key == 16:
             self.lr = (v if v > 0 else 0) / 10.0
-        elif key == 17:
-            self.bias = (v if v > 0 else 0) * MOTOR_SCALE
-            self.wl[7] = self.bias
-            self.wr[7] = self.bias
         elif key == 18:
             self.forget_ms = (v if v > 0 else 0) * 1000
             self.forget_timer = 0
@@ -330,7 +334,8 @@ class Brain:
         #   nibbles of the message, 11 checksum.
         # The message is a number of items (two nibbles) then the items, five nibbles each: a key
         # (two) and a value (three, signed 12 bits). Keys: 0..6 left wheel weights of the sensors,
-        # 7..13 right wheel weights, in tenths; 16 learning step (tenths), 17 speed (units), 18
+        # 7..13 right wheel weights, in tenths; 14 and 15 the speed of the left and the right wheel
+        # with nothing in front (the bias weights, in tenths); 16 learning step (tenths), 18
         # forgetting delay (seconds, 0 = never), 19 a command (CMD_*). Once complete the message is
         # applied and answered by "@@ack n". The mode's next tick puts its own lights back.
         if rgb[0].get_intensity_green() != 15:
@@ -524,9 +529,10 @@ def cleanup():
         say("bye")
 
 
-def run(step10=None, base10=None, forget_s=None, weights=None):
+def run(step10=None, base10=None, forget_s=None, weights=None, base10r=None):
     # step10: the learning step in tenths (30 = 3), base10: the speed with nothing in front, in tenths
-    # (667 = the firmware's 2000 / 30), forget_s: seconds between two forgettings (0: never),
+    # (667 = the firmware's 2000 / 30; the left wheel's, and the right wheel's too unless base10r is
+    # given), forget_s: seconds between two forgettings (0: never),
     # weights: the 14 weights in tenths, separated by commas (left wheel's 7 then right wheel's 7), or ""
     if step10 is None:
         step10 = STEP10
@@ -539,7 +545,7 @@ def run(step10=None, base10=None, forget_s=None, weights=None):
     beh.disable_behaviors()
     beh.enable_leds_proximity()
     try:
-        brain = Brain(step10, base10, forget_s, weights)
+        brain = Brain(step10, base10, forget_s, weights, base10r)
         brain.body()
         brain.draw()
         say("hello", 1)

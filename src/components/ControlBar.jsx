@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Slider from './Slider.jsx';
-import { DEFAULT_BASE, DEFAULT_FORGET, DEFAULT_STEP, PRESETS, RANGES } from '../spec.js';
+import { DEFAULT_FORGET, DEFAULT_STEP, PRESETS, RANGES } from '../spec.js';
 import { CMD } from '../protocol.js';
 import { useHeld, num } from '../util.js';
 import { fmt } from '../i18n.js';
 import { BrainIcon, CheckIcon, EraserIcon, PauseIcon, PlayIcon, WarnIcon } from '../icons.jsx';
 
-// What the person does to the robot, in a bar: learning on or off, forget everything, a ready-made brain, pause, and the three sliders
-// (how fast it learns, how fast it drives, how fast it forgets). On a wide screen it is part of the top bar; on a narrow one it is a
-// page of its own (`inPage`, with the hints). Every change is told to the robot (or the virtual one) as it is made.
+// What the person does to the robot, in a bar: learning on or off, forget everything, a ready-made brain, pause, and the two sliders
+// (how fast it learns, how fast it forgets). The speed of the robot is not here: it is the weight of the constant input "1" in the
+// picture. On a wide screen the bar is part of the top bar; on a narrow one it is a page of its own (`inPage`, with the hints).
+// Every change is told to the robot (or the virtual one) as it is made.
 export default function ControlBar({ t, state, params, enabled, live, onChange, onPreset, inPage = false }) {
   const [step, holdStep] = useHeld(params.step);
-  const [base, holdBase] = useHeld(Math.round(params.base));
   const [forget, holdForget] = useHeld(params.forget);
   const [menu, setMenu] = useState(false);
   const box = useRef(null);
@@ -68,10 +68,6 @@ export default function ControlBar({ t, state, params, enabled, live, onChange, 
         <Slider
           id="s-step" label={t.ctl.learnStep} hint={hint(t.ctl.learnStepHint)} title={t.ctl.learnStepHint} value={step} {...RANGES.step} disabled={!enabled}
           format={(v) => num(v)} defaultValue={DEFAULT_STEP} resetLabel={t.ctl.reset} onChange={set('step', holdStep)}
-        />
-        <Slider
-          id="s-base" label={t.ctl.base} hint={hint(t.ctl.baseHint)} title={t.ctl.baseHint} value={base} {...RANGES.base} disabled={!enabled}
-          format={(v) => num(v, 0)} defaultValue={Math.round(DEFAULT_BASE)} resetLabel={t.ctl.reset} onChange={set('base', holdBase)}
         />
         <Slider
           id="s-forget" label={t.ctl.forget} hint={hint(forget > 0 ? fmt(t.ctl.forgetHint, { s: forget }) : t.ctl.forgetOff)} title={forget > 0 ? fmt(t.ctl.forgetHint, { s: forget }) : t.ctl.forgetOff}

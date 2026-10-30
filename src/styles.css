@@ -13,6 +13,7 @@
   --muted: #7a7872;
   --grid: #e1e0d9;
   --axis: #c3c2b7;
+  --robot-fill: #e4e9f1; --robot-line: #8896ae;
   --border: rgba(11, 11, 11, 0.1);
   --border-strong: rgba(11, 11, 11, 0.24);
   --s1: #2a78d6;
@@ -44,6 +45,7 @@
     --muted: #8f8d86;
     --grid: #2c2c2a;
     --axis: #3e3e3a;
+  --robot-fill: #1f252e; --robot-line: #5a687e;
     --border: rgba(255, 255, 255, 0.1);
     --border-strong: rgba(255, 255, 255, 0.24);
     --s1: #3987e5;
@@ -70,6 +72,7 @@
   --muted: #8f8d86;
   --grid: #2c2c2a;
   --axis: #3e3e3a;
+  --robot-fill: #1f252e; --robot-line: #5a687e;
   --border: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.24);
   --s1: #3987e5;
@@ -185,24 +188,20 @@ svg.network { display: block; width: 100%; height: auto; overflow: visible; }
 .conn .line { fill: none; stroke-linecap: round; transition: stroke-width 0.35s ease; }
 .conn.pos .line { stroke: var(--pos); }
 .conn.neg .line { stroke: var(--neg); }
-.conn.zero .line { stroke: var(--axis); }
-.conn.bias .line { opacity: 0.55; }
+.conn.zero .line { stroke: var(--muted); opacity: 0.7; }
 .conn .underlay { fill: none; stroke: var(--ink); opacity: 0.16; stroke-linecap: round; }
 .conn .flow { fill: none; stroke: #fff; stroke-dasharray: 1.5 13; stroke-linecap: round; animation: flow var(--dur, 1s) linear infinite; pointer-events: none; }
 @keyframes flow { to { stroke-dashoffset: -14.5; } }
 .conn .hit { fill: none; stroke: transparent; stroke-width: 16; cursor: pointer; pointer-events: stroke; }
-.conn.bias .hit { cursor: default; pointer-events: none; }
 .heads { pointer-events: none; }
 .head .halo { fill: var(--surface); stroke: var(--surface); stroke-width: 3; stroke-linejoin: round; }
 .conn.pos .head .tri { fill: var(--pos); }
 .conn.neg .head .tri { fill: var(--neg); }
-.conn.bias .head .tri { fill: var(--muted); }
 .chip { cursor: default; outline: none; }
 .chip.editable { cursor: text; }
-.chip rect { fill: var(--surface); stroke: var(--axis); stroke-width: 1.5; }
+.chip rect { fill: var(--surface); stroke: var(--muted); stroke-width: 1.5; }
 .conn.pos .chip rect { stroke: var(--pos); }
 .conn.neg .chip rect { stroke: var(--neg); }
-.conn.bias .chip rect { stroke: var(--axis); stroke-dasharray: 3 2; }
 .conn.zero .chip { opacity: 0.6; }
 .conn.zero .chip text { fill: var(--muted); }
 .conn.zero:hover .chip, .conn.zero.selected .chip, .chip:focus-visible { opacity: 1; }
@@ -214,8 +213,8 @@ svg.network { display: block; width: 100%; height: auto; overflow: visible; }
 @keyframes pop { 0% { stroke-width: 6; } 100% { stroke-width: 1.5; } }
 
 .neuron { outline: none; }
-.neuron .shell { fill: var(--surface-2); }
-.neuron .rim { fill: none; stroke: var(--axis); stroke-width: 2; }
+.neuron .shell { fill: var(--surface); }
+.neuron .rim { fill: none; stroke: var(--ink); stroke-width: 3; }
 @keyframes hotpulse { 0% { stroke-width: 9; opacity: 0.4; } 100% { stroke-width: 3; opacity: 1; } }
 .net-robot .robot-body * { vector-effect: non-scaling-stroke; }
 .net-robot .robot-body .body { stroke-width: 2.6px; }
@@ -237,9 +236,9 @@ svg.network { display: block; width: 100%; height: auto; overflow: visible; }
 .n-val { font: 600 12px var(--mono); fill: var(--muted); font-variant-numeric: tabular-nums; }
 .badge-n { font-size: 10.5px; font-weight: 700; fill: #fff; }
 .neuron.out .speed { font-size: 24px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
-.neuron.out .plus { fill: none; stroke: var(--ink-2); stroke-width: 3.6; stroke-linecap: round; }
-.neuron.out .out-wire { fill: none; stroke: var(--ink-2); stroke-width: 2.4; stroke-linecap: round; }
-.neuron.out .out-head { fill: var(--ink-2); }
+.neuron.out .plus { fill: none; stroke: var(--ink); stroke-width: 3.6; stroke-linecap: round; }
+.neuron.out .out-wire { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
+.neuron.out .out-head { fill: var(--ink); }
 .wheel-glyph .tire { fill: var(--ink); }
 .wheel-glyph .tread { fill: none; stroke: var(--surface); stroke-opacity: 0.45; stroke-dasharray: 4 8; }
 .robot-top { overflow: visible; }
@@ -248,13 +247,14 @@ svg.network { display: block; width: 100%; height: auto; overflow: visible; }
 .net-box { position: relative; }
 .chip-edit { position: absolute; transform: translate(-50%, -50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 8px 8px; background: var(--surface); border: 1.5px solid var(--ink); border-radius: 12px; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35); }
 .chip-edit-label { font-size: 12px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.chip-edit-hint { max-width: 190px; text-align: center; font-size: 12px; line-height: 1.3; color: var(--muted); }
 .chip-edit-row { display: flex; align-items: center; gap: 4px; }
 .chip-edit input.num { width: 64px; text-align: center; font-size: 16px; }
 
-.robot-body .body { fill: var(--surface-2); stroke: var(--axis); stroke-width: 2.2; stroke-linejoin: round; }
+.robot-body .body { fill: var(--robot-fill); stroke: var(--robot-line); stroke-width: 2.2; stroke-linejoin: round; }
 .robot-body .body.hit { stroke: var(--critical); }
-.robot-body .details .line { fill: none; stroke: var(--axis); stroke-width: 0.9; opacity: 0.8; }
-.robot-body .details .stud { fill: var(--axis); opacity: 0.55; }
+.robot-body .details .line { fill: none; stroke: var(--robot-line); stroke-width: 0.9; opacity: 0.8; }
+.robot-body .details .stud { fill: var(--robot-line); opacity: 0.55; }
 .robot-body .tyre { fill: var(--ink); }
 .robot-body .rib { stroke: var(--surface); stroke-opacity: 0.35; stroke-width: 1.4; stroke-linecap: round; }
 .robot-top .sensor { stroke-width: 1.6; transition: fill-opacity 0.2s; }
@@ -266,6 +266,8 @@ svg.network { display: block; width: 100%; height: auto; overflow: visible; }
 .net-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0; margin: 10px 0 4px; font-size: 13px; color: var(--ink-2); }
 .net-legend li { display: flex; align-items: center; gap: 8px; }
 .net-legend svg { flex: none; }
+.l-base rect { fill: var(--ink); }
+.l-base text { font: 700 12px var(--mono); fill: var(--surface); }
 .l-pos { stroke: var(--pos); stroke-width: 4; stroke-linecap: round; }
 .c-pos { fill: var(--pos); }
 .l-neg { stroke: var(--neg); stroke-width: 4; stroke-linecap: round; }
