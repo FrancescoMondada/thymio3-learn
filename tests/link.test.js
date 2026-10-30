@@ -56,7 +56,7 @@ test('connect, install the module once, start the mode: the robot says hello and
   assert.ok(l.events.some((e) => e.type === 'hello'));
   await until(() => l.last('w') && l.last('p') && l.last('n'));
   assert.deepEqual(l.last('w').left, [0, 0, 0, 0, 0, 0, 0]);
-  assert.deepEqual(l.last('p'), { type: 'p', step: 3, baseLeft: 66.7, baseRight: 66.7, forget: 16, t: l.last('p').t });
+  assert.deepEqual(l.last('p'), { type: 'p', step: 3, baseLeft: 67, baseRight: 67, forget: 16, t: l.last('p').t });
   assert.equal(l.last('n').state, 'drive');
   assert.ok(fake.listFiles && window.fakeRobot.files.includes(`${MODULE.name}.py`), 'the module is on the robot');
   assert.ok(l.log.some(([, t]) => /launcher/.test(t)), 'started by the two-line launcher');
@@ -159,6 +159,6 @@ test('the store follows the events, and keeps a history', async () => {
 });
 
 test('runArgs: the arguments of the launcher', () => {
-  assert.equal(runArgs({}), '30, 667, 16, "", 667');
+  assert.equal(runArgs({}), '30, 670, 16, "", 670');
   assert.equal(runArgs({ step: 5, baseLeft: 90, baseRight: 70, forget: 0, weights: { left: [1, 0, 0, 0, 0, 0, -2.5], right: [0, 0, 0, 0, 0, 0, 0] } }), '50, 900, 0, "10,0,0,0,0,0,-25,0,0,0,0,0,0,0", 700');
 });

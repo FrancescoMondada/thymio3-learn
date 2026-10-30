@@ -70,6 +70,15 @@ test('the virtual robot learns from a wall, deterministically', () => {
   assert.deepEqual(run().filter((e) => e.type === 'w').at(-1).left, w.left, 'same world, same weights');
 });
 
+test('the virtual robot starts with the interface\'s default base speed, 67 for both wheels', () => {
+  const events = [];
+  const sim = new SimBackend((e) => events.push(e));
+  sim.start();
+  assert.deepEqual(events.find((e) => e.type === 'p'), { type: 'p', step: 3, baseLeft: 67, baseRight: 67, forget: 16, t: events.find((e) => e.type === 'p').t });
+  for (let i = 0; i < 20; i++) sim.advance(20);
+  assert.deepEqual(events.filter((e) => e.type === 'n').at(-1).motors, [67, 67], 'nothing in front: each wheel runs at its base speed');
+});
+
 test('the interface changes a running virtual robot through the same messages as the real one', () => {
   const events = [];
   const sim = new SimBackend((e) => events.push(e));

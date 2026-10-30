@@ -24,8 +24,9 @@ export const distanceFromProx = (reading) => SENSE_RANGE_MM * (1 - Math.sqrt(Mat
 export const COLLISION = 3300;                  // COLLISION_SENSOR_VALUE: over this a front sensor means a collision
 export const SENSOR_SCALE = 20;                 // x = proximity / 20
 export const MOTOR_SCALE = 30;                  // wheel = sum(x * w) / 30
-export const DEFAULT_BIAS = 2000;               // the bias weight: 2000 / 30 = 66.7
-export const DEFAULT_BASE = DEFAULT_BIAS / MOTOR_SCALE;
+export const NORMALISATION = SENSOR_SCALE * MOTOR_SCALE;     // 600: reading * weight / 600 is the speed a sensor brings (what the pictures say)
+export const DEFAULT_BIAS = 2000;               // the firmware's bias weight: 2000 / 30 = 66.7
+export const DEFAULT_BASE = 67;                 // the speed with nothing in front that the interface starts the robot with: a whole number, near the firmware's 66.7
 export const DEFAULT_STEP = 3;                  // LEARNING_STEP
 export const DEFAULT_FORGET = 16;               // seconds between two forgettings
 export const W_LIMIT = 100;
@@ -38,7 +39,7 @@ export const LEARNT_MAX = 16;                   // the 16 Lego LEDs
 // What the sliders can do.
 export const RANGES = {
   step: { min: 0, max: 10, step: 0.5 },         // the learning step (the firmware's is 3)
-  base: { min: 0, max: 200, step: 1 },          // the speed with nothing in front (the firmware's is 67)
+  base: { min: 0, max: 200, step: 1 },          // the speed with nothing in front (the firmware's is 66.7), to a tenth
   forget: { min: 0, max: 120, step: 1 },        // seconds between two forgettings, 0 = never
   weight: { min: -30, max: 30, step: 0.5 },     // a weight, by hand (up to 100 in the typed field)
 };
@@ -53,7 +54,7 @@ export const STATES = {
 export const STATE_CODE = { drive: 0, back: 1, learn: 2, freeze: 4, pause: 5 };
 
 // The speed one sensor adds to one wheel for a reading and a weight (what a connection "carries").
-export const contribution = (reading, weight) => (reading / SENSOR_SCALE) * weight / MOTOR_SCALE;
+export const contribution = (reading, weight) => (reading * weight) / NORMALISATION;
 
 // A new brain: the 14 weights at 0.
 export const emptyWeights = () => ({ left: new Array(7).fill(0), right: new Array(7).fill(0) });

@@ -1,4 +1,5 @@
 import { LineAssembler, parseRobotLine, encodeMessage, itemsFor, liveActuator, CMD, KEY } from '../protocol.js';
+import { DEFAULT_BASE } from '../spec.js';
 
 // The real robot. The mode (src/py/ann_mode.py) runs on the robot, drives the motors itself and prints "@@..." lines
 // that become the same events as the virtual robot's (see SimBackend).
@@ -47,7 +48,7 @@ const bare = (name) => String(name).replace(/^\/+/, '');
 // The two lines that start the installed mode, and the arguments that carry the state to start from.
 export const runArgs = (init = {}) => {
   const w = init.weights ? [...init.weights.left, ...init.weights.right].map((x) => Math.round(x * 10)).join(',') : '';
-  const base10 = (v) => (v != null ? Math.round(v * 10) : 667);
+  const base10 = (v) => Math.round((v ?? DEFAULT_BASE) * 10);
   return `${Math.round((init.step ?? 3) * 10)}, ${base10(init.baseLeft)}, ${Math.round(init.forget ?? 16)}, "${w}", ${base10(init.baseRight)}`;
 };
 

@@ -1,7 +1,7 @@
 import { VirtualRobot } from './virtual-robot.js';
 import { parseRobotLine, encodeMessage, itemsFor } from '../protocol.js';
 import { TICK_MS } from './ann-mode.js';
-import { DEFAULT_STEP, DEFAULT_FORGET } from '../spec.js';
+import { DEFAULT_BASE, DEFAULT_STEP, DEFAULT_FORGET } from '../spec.js';
 
 // The virtual robot as the interface sees it: the same events as the real one (see robot/robot-backend-core.js), the same
 // messages to change the weights and the settings. The interface calls advance() with the real time that has passed;
@@ -22,8 +22,8 @@ export class SimBackend {
   start(init = {}) {
     const out = this.robot.start({
       step10: Math.round((init.step ?? DEFAULT_STEP) * 10),
-      base10: init.baseLeft != null ? Math.round(init.baseLeft * 10) : 667,
-      base10r: init.baseRight != null ? Math.round(init.baseRight * 10) : null,
+      base10: Math.round((init.baseLeft ?? DEFAULT_BASE) * 10),
+      base10r: Math.round((init.baseRight ?? init.baseLeft ?? DEFAULT_BASE) * 10),
       forgetS: init.forget ?? DEFAULT_FORGET,
       weights: init.weights ? [...init.weights.left, ...init.weights.right].map((w) => Math.round(w * 10)) : '',
     });

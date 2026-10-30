@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CloseIcon } from '../icons.jsx';
-import { MAX_SPEED, SENSOR_SCALE, MOTOR_SCALE } from '../spec.js';
-import { MINUS, clamp, num, sensorColor } from '../util.js';
+import { MAX_SPEED, NORMALISATION } from '../spec.js';
+import { clamp, num, sensorColor } from '../util.js';
 import { fmt } from '../i18n.js';
 
 // The calculation of one neuron (one wheel), live: every input with what it reads, its weight and the speed it brings, then the sum.
 // A window that floats over the page, not hiding the picture more than needed: it can be dragged by its title (on a narrow screen it
-// sits at the bottom instead). `rows` are the 8 connections of the neuron (7 sensors and the constant input 1), as the picture
+// sits at the bottom instead). Its height does not change: what is not always there (the note when the wheel does not follow the network)
+// has its place kept. `rows` are the 8 connections of the neuron (7 sensors and the constant input 1), as the picture
 // draws them, so that what is added here is what the picture shows. The numbers follow the robot as it sends them.
 const signed = (v, digits = 1) => (v > 0.05 ? '+' : '') + num(v, digits);
 const tone = (v) => (Math.abs(v) < 0.05 ? 'zero' : v > 0 ? 'pos' : 'neg');
@@ -55,7 +56,7 @@ export default function NeuronHelp({ t, wheel, rows, speed, state, onClose }) {
             <span className="calc-expr">
               {k.bias
                 ? `1 × ${num(k.w, 1)}`
-                : `${Math.round(k.reading)} ÷ ${SENSOR_SCALE} × ${num(k.w).replace(MINUS, '−')} ÷ ${MOTOR_SCALE}`}
+                : `${Math.round(k.reading)} × ${num(k.w)} ÷ ${NORMALISATION}`}
             </span>
             <span className="calc-val">{signed(k.c)}</span>
           </li>
@@ -65,7 +66,10 @@ export default function NeuronHelp({ t, wheel, rows, speed, state, onClose }) {
         <dt>{t.calc.sum}</dt><dd className={tone(sum)}>{signed(sum)}</dd>
         <dt>{t.calc.speed}<span className="muted small"> · {t.calc.speedNote}</span></dt><dd className="big">{num(result, 0)}</dd>
       </dl>
-      {!follows && <p className="calc-note">{fmt(t.calc.notDriving, { state: t.cycle[state] || state, v: num(speed, 0) })}</p>}
+      <p className="calc-foot muted small">{t.calc.norm}</p>
+      <div className="calc-note-slot">
+        {!follows && <p className="calc-note">{fmt(t.calc.notDriving, { state: t.cycle[state] || state, v: num(speed, 0) })}</p>}
+      </div>
     </aside>
   );
 }

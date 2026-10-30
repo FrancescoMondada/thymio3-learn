@@ -117,12 +117,12 @@ export default function Network({ t, weights, prox, motors, bases, state = 'driv
       const chipT = crossing ? 0.58 : i > 4 ? 0.5 : i === 2 ? (N.j === LEFT ? 0.27 : 0.43) : (i < 2) === (N.j === LEFT) ? 0.27 : 0.43;       // (the two crossing lines meet in the middle: their numbers are just before that, apart from each other and from the numbers of the base)
       const name = bias ? t.net.bias : t.net.sensors[i];
       const tip = bias
-        ? fmt(t.net.tipBias, { wheel: wheels[N.j], w: num(w, 0) })
+        ? fmt(t.net.tipBias, { wheel: wheels[N.j], w: num(w, 1) })
         : fmt(t.net.tip, { sensor: name, wheel: wheels[N.j], w: num(w), p: Math.round(reading), c: num(c) });
       const flash = !bias && changed && now - (changed[key] || -1e9) < 1400;
       conns.push({
         i, j: N.j, bias, w, reading, c, cp, d: `M${p0[0]},${p0[1]} C${cp[1][0]},${cp[1][1]} ${cp[2][0]},${cp[2][1]} ${p1[0]},${p1[1]}`, wpx, zero, head, hw: 4 + wpx * 0.4, stop,
-        pos: w > 0, neg: w < 0, key, chipT, name, tip, flash, label: num(w, bias ? 0 : 1), tone: zero ? 'zero' : w > 0 ? 'pos' : 'neg',
+        pos: w > 0, neg: w < 0, key, chipT, name, tip, flash, label: num(w, 1), tone: zero ? 'zero' : w > 0 ? 'pos' : 'neg',
       });
     }
   }
@@ -341,10 +341,11 @@ function Tyre({ x, y, w, h, v, rot, pxPerUnit }) {
   );
 }
 
-// What a number typed in a chip can be: a sensor's weight goes in half notches, from -100 to 100; a base speed in whole units, from 0 to 200
-// (the maker's value, 66.7, can be put back).
-const WEIGHT_SPEC = { step: 0.5, min: -W_LIMIT, max: W_LIMIT, digits: 1, reset: null };
-const BASE_SPEC = { step: 1, min: RANGES.base.min, max: RANGES.base.max, digits: 0, reset: DEFAULT_BASE };
+// What a number typed in a chip can be: a sensor's weight goes in half notches, from -100 to 100; a base speed from 0 to 200 to a tenth (the
+// maker's value is 66.7: it has to be possible to type it), the buttons moving it by 1. `step` is what the - and + buttons add, `round`
+// what a typed number is rounded to.
+const WEIGHT_SPEC = { step: 0.5, round: 0.5, min: -W_LIMIT, max: W_LIMIT, digits: 1, reset: null };
+const BASE_SPEC = { step: 1, round: 0.1, min: RANGES.base.min, max: RANGES.base.max, digits: 1, reset: DEFAULT_BASE };
 
 // A weight typed in the chip: the number, one notch less, one notch more. Enter or a click elsewhere sets it, Esc forgets it.
 function ChipEditor({ t, label, hint, value, spec, x, y, onSet, onClose }) {
@@ -355,12 +356,13 @@ function ChipEditor({ t, label, hint, value, spec, x, y, onSet, onClose }) {
   const closed = useRef(false);
   useEffect(() => { input.current?.focus(); input.current?.select(); }, []);
   const read = (s) => { const v = Number(s.replace(MINUS, '-').replace(',', '.')); return s.trim() !== '' && Number.isFinite(v) ? v : null; };
-  const rounded = (v) => clamp(Math.round(v / spec.step) * spec.step, spec.min, spec.max);
+  const per = Math.round(1 / spec.round);
+  const rounded = (v) => clamp(Math.round(v * per) / per, spec.min, spec.max);
   const close = () => { closed.current = true; onClose(); };
   const finish = () => {
     if (closed.current) return;
     const v = read(text);
-    if (text !== first.current && v != null && rounded(v) !== value) onSet(rounded(v));       // (what was not typed in stays as it is: 66.7 is shown as 67)
+    if (text !== first.current && v != null && rounded(v) !== value) onSet(rounded(v));       // (what was not typed in stays as it is)
     close();
   };
   const nudge = (d) => { const v = rounded((read(text) ?? value) + d); setText(num(v, spec.digits)); onSet(v); };
@@ -388,7 +390,7 @@ function ChipEditor({ t, label, hint, value, spec, x, y, onSet, onClose }) {
         <button type="button" className="icon-btn small" onPointerDown={keep} onMouseDown={keep} onClick={() => nudge(spec.step)} aria-label={`${t.weights.more} (+${num(spec.step)})`} title={t.weights.more}><PlusIcon size={14} /></button>
       </div>
       {hint && <span className="chip-edit-hint">{hint}</span>}
-      {spec.reset != null && <button type="button" className="link-btn" onPointerDown={keep} onMouseDown={keep} onClick={putBack}>{t.ctl.reset} : {num(spec.reset, 0)}</button>}
+      {spec.reset != null && <button type="button" className="link-btn" onPointerDown={keep} onMouseDown={keep} onClick={putBack}>{t.ctl.reset} : {num(spec.reset, 1)}</button>}
     </div>
   );
 }

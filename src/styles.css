@@ -395,7 +395,9 @@ input[type="range"]:disabled { cursor: not-allowed; }
 .calc-sum dd.pos { color: var(--pos); }
 .calc-sum dd.neg { color: var(--neg); }
 .calc-sum dd.big { font-size: 28px; color: var(--ink); }
-.calc-note { margin: 10px 0 0; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--warning) 16%, var(--surface)); font-size: 13px; }
+.calc-foot { margin: 8px 0 0; line-height: 1.35; }
+.calc-note-slot { height: 76px; margin-top: 8px; }
+.calc-note { margin: 0; height: 100%; padding: 7px 10px; overflow: hidden; border-radius: 10px; background: color-mix(in srgb, var(--warning) 16%, var(--surface)); font-size: 13px; line-height: 1.35; }
 
 /* ---- the signals over time ----------------------------------------------------------------- */
 .timeline .card-head { flex-wrap: wrap; }
@@ -508,12 +510,14 @@ kbd { font: 600 12px var(--mono); padding: 2px 7px; border-radius: 6px; border: 
 @media (max-width: 1000px) {
   .neuron-help { left: 8px; right: 8px; bottom: 60px; width: auto; max-height: 56vh; }
   .neuron-help header { cursor: default; touch-action: auto; }
-  .neuron-help { max-height: 52vh; }
-  .neuron-help > p { display: none; }
+  .neuron-help { max-height: 62vh; }
+  .neuron-help > p:not(.calc-foot) { display: none; }
+  .calc-foot { font-size: 11.5px; }
   .calc-row { grid-template-columns: 4.4em minmax(0, 1fr) auto; gap: 0 8px; padding: 4px 0; }
   .calc-full { display: none; }
   .calc-short { display: inline; }
-  .calc-note { font-size: 12.5px; }
+  .calc-note { font-size: 12px; padding: 5px 9px; }
+  .calc-note-slot { height: 56px; margin-top: 6px; }
   main { padding: 12px 12px 76px; }
   [data-tab] { display: none; }
   .tab-net [data-tab="net"], .tab-settings [data-tab="settings"], .tab-curves [data-tab="curves"], .tab-arena [data-tab="arena"] { display: block; }

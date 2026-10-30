@@ -23,7 +23,9 @@ roue = (x[0]·w[0] + … + x[6]·w[6] + x[7]·w[7]) / 30
 
 Le poids du biais (2000) est la vitesse du robot quand rien n'est devant lui: 2000 / 30 = 66. Il y en a **deux**, un par roue (le firmware en a
 autant: 16 poids en tout), et ils peuvent différer: un robot dont les deux roues n'ont pas la même base tourne en rond. Dans l'interface
-on les voit comme ce qu'ils sont, **l'entrée « 1 »** et ses deux poids, exprimés directement en vitesse (2000 / 30 = 67).
+on les voit comme ce qu'ils sont, **l'entrée « 1 »** et ses deux poids, exprimés directement en vitesse. Le firmware donne 66,7; **l'interface
+démarre le robot à 67** (un nombre entier, la valeur par défaut), un écart de 0,3 avec le firmware; le mode, lui, garde 2000 / 30 quand on
+ne lui dit rien (c'est ce que vérifient les tests).
 
 - **Avance** (blanc qui pulse): le réseau conduit. Si un capteur avant dépasse **3300**, c'est un choc.
 - **Recule** (rouge): 1 s à −200, en mémorisant quels capteurs ont touché.
@@ -58,7 +60,7 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
     ne voit rien), lecture haute = objet près = petit cône marqué; le nombre au bout est la lecture (0 à 4095). Un anneau rouge = choc.
   - **L'entrée « 1 »** (« Toujours 1 ») est sur le talon, avec ses deux connexions: **le poids de chacune est la vitesse de cette roue
     quand rien n'est devant le robot** (67, la vitesse du robot du fabricant). Il n'y a plus de curseur « vitesse du robot » dans la barre:
-    on touche le 67 sur le robot, on tape un autre nombre (0 à 200, des unités entières) ou on remet la valeur du fabricant. Les deux se
+    on touche le 67 sur le robot, on tape un autre nombre (0 à 200, au dixième) ou on remet la valeur par défaut. Les deux se
     règlent séparément. **Les deux neurones « + »** sont dans le corps, chacun à côté de sa roue.
     Un neurone additionne ce qu'apporte chaque capteur et ce qu'apporte l'entrée « 1 », et envoie le résultat à **sa roue**: un pneu dont les
     rainures avancent ou reculent à une vitesse **exactement proportionnelle** à celle de la roue, avec le nombre à côté.
@@ -76,9 +78,9 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
     fouillis; l'entrée « 1 » arrive entre les deux. Les nombres de ces traits sont placés pour ne pas se recouvrir. Les traits à
     poids nul sont en gris foncé (pas en gris pâle comme le dessin du robot). Le trou du stylo, au milieu, est sur la ligne de l'axe des
     roues, comme les deux neurones.
-  - **Un « ? » sur chaque neurone** ouvre une fenêtre avec **le calcul du neurone en direct**: pour chaque entrée, `lecture ÷ 20 × poids ÷ 30`
-    et la vitesse qu'elle apporte, puis la somme et la vitesse de la roue (partie entière, entre −500 et 500). Elle se déplace en tirant
-    son titre (sur un écran étroit elle est en bas) et se ferme avec × ou Échap. Quand le robot recule, apprend ou est en pause, la roue
+  - **Un « ? » sur chaque neurone** ouvre une fenêtre avec **le calcul du neurone en direct**: pour chaque entrée, `lecture × poids ÷ 600`
+    (600 = 20 × 30, « un nombre de normalisation » qui remet les lectures à l'échelle des vitesses) et la vitesse qu'elle apporte, puis la somme et la vitesse de la roue (partie entière, entre −500 et 500). Sa hauteur ne change jamais (la place de
+    la note est gardée). Elle se déplace en tirant son titre (sur un écran étroit elle est en bas) et se ferme avec × ou Échap. Quand le robot recule, apprend ou est en pause, la roue
     ne suit pas le réseau: la fenêtre le dit et donne la vitesse réelle. Le calcul est celui de `NeuronHelp.jsx` sur les mêmes lignes que
     le dessin, donc ce qu'on y additionne est ce qu'on voit.
 - **La barre du haut** (deux lignes, toujours visible sur un grand écran; il n'y a plus de colonne à droite): la première a l'icône de
@@ -93,13 +95,13 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
   cours) et les leçons retenues (les 16 LED Lego du robot). La phrase qui explique l'étape est l'infobulle du cycle, celle des chocs et
   des leçons faites celle des leçons. **Sous l'image**: la légende et, dépliable, la règle d'apprentissage. Il n'y a plus de barre
   sous l'image.
-- **Les signaux au fil du temps** (la carte se replie sur son titre, le choix est gardé): une pile de graphiques qui ont **le même axe du temps et les mêmes marges**, donc alignés de haut
+- **Les signaux au fil du temps** (la carte se replie sur son titre; **fermée au départ**, le choix est gardé): une pile de graphiques qui ont **le même axe du temps et les mêmes marges**, donc alignés de haut
   en bas (ce qui se passe au même instant est sur la même verticale): les lectures des capteurs (avec le seuil de choc), les poids
   vers la roue gauche, les poids vers la roue droite, la vitesse des roues. Chaque graphique se cache avec son œil, et on choisit les
   signaux à comparer (capteurs 1 à 7, roue gauche, roue droite; « Tous » / « Aucun »). Une marque rouge sur tous les graphiques est un
   choc; un seul curseur traverse la pile. Durée: 30 s, 1, 5 ou 15 min (le robot garde 15 min de lectures); vue tableau des poids.
 - **Robot virtuel** ou **robot réel** (bouton en haut): le virtuel a une arène où l'on **glisse les obstacles**, avec un temps
-  accéléré (×1 à ×10); la carte de l'arène se replie sur son titre (le robot virtuel continue de rouler). Avec un robot réel il n'y a
+  accéléré (×1 à ×10); la carte de l'arène se replie sur son titre, **fermée au départ** (le robot virtuel continue de rouler). Avec un robot réel il n'y a
   pas d'arène et pas de panneau à part: le robot est celui de l'image.
 - **Paramètres** (cliquer **l'icône de l'application**, en haut à gauche, ou la touche D): **la langue** (italien, français, allemand,
   anglais; la langue du navigateur est prise si c'est l'une des quatre), **le thème** (auto, clair, sombre), et tout l'ancien diagnostic:
