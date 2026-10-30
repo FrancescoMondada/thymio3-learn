@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import RobotBody, { WHEEL } from './RobotBody.jsx';
+import NeuronHelp from './NeuronHelp.jsx';
 import { MinusIcon, PlusIcon } from '../icons.jsx';
 import { PROX_MAX, COLLISION, DEFAULT_BASE, RANGES, SENSORS, SENSE_RANGE_MM, W_LIMIT, contribution, distanceFromProx } from '../spec.js';
 import { MINUS, arrowEnds, bezierAt, clamp, num, sensorColor, usePrefersReducedMotion } from '../util.js';
@@ -16,9 +17,9 @@ import { fmt } from '../i18n.js';
 
 const GAP = 9;                              // between the tip of an arrow and the neuron, px
 const RAD = Math.PI / 180;
-const NEURON = { x: 20, y: 26, r: 10.5 };   // mm, in the robot's drawing (x to the right, y to the back): inside the body, beside the wheel
+const NEURON = { x: 20, y: WHEEL.y, r: 10.5 };   // mm, in the robot's drawing (x to the right, y to the back): inside the body, on the line of the wheel's middle
 const SENSOR_R = 6;                         // mm
-const BASE_AT = [0, 46];                    // mm: where the constant input 1 sits, on the tail
+const BASE_AT = [0, 51];                    // mm: where the constant input 1 sits, on the tail
 const DRAWN = { 5: [-20, 56], 6: [20, 56] };    // the back sensors, on the tail; the others are at SENSORS[i] (x, -y)
 const TREAD_MM = 0.2;                       // the stripes of a tyre move 0.2 mm a second for one unit of wheel speed
 const LEFT = 0;
@@ -40,23 +41,31 @@ function layout(vertical) {
 const unit = ([x, y]) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; };
 const add = (p, v, k = 1) => [p[0] + v[0] * k, p[1] + v[1] * k];
 
-// The way a connection comes into a neuron, as a direction in the robot's drawing: from the nose side for the five front sensors (in the
-// order of their positions across the robot, so that the lines do not cross each other), from the tail for the back ones and the base.
-function arrival(i) {
+// The way a connection comes into a neuron (on the left, `side` -1, or on the right, 1), as a direction in the robot's drawing: from the nose
+// side for the five front sensors (in the order of their positions across the robot, so that the lines do not cross each other). At the
+// tail, three kinds of lines meet near each neuron, kept apart by where they arrive: the sensor right behind it comes straight in, pointing
+// at its middle; the constant input 1, in the middle of the tail, comes from the inner side of the back; the sensor on the other side of the
+// tail, whose line crosses the robot, comes in on the inner side, closer to the front, out of the way of the other two.
+const TAIL_ARRIVAL = { own: 0, base: 28, cross: 72 };      // degrees from straight behind the neuron, towards the middle of the robot
+const CROSS_TILT = 35;                                      // degrees: how much a crossing line leans towards the other side when it leaves its sensor
+function arrival(i, side) {
   if (i < 5) { const a = ((i - 2) / 2) * 52 * RAD; return [Math.sin(a), -Math.cos(a)]; }
-  const a = (i === 5 ? -40 : i === 6 ? 40 : 0) * RAD;
+  const owner = i === 5 ? -1 : i === 6 ? 1 : 0;
+  const inner = owner === 0 ? TAIL_ARRIVAL.base : owner === side ? TAIL_ARRIVAL.own : TAIL_ARRIVAL.cross;
+  const a = -side * inner * RAD;
   return [Math.sin(a), Math.cos(a)];
 }
 
 const widthOf = (w, full = 20) => 1.4 + 9 * Math.min(1, Math.abs(w) / full) ** 0.75;
 
-export default function Network({ t, weights, prox, motors, bases, hit, now, changed, enabled = false, onSetWeight, onSetBase, vertical = false, showTips = true }) {
+export default function Network({ t, weights, prox, motors, bases, state = 'drive', hit, now, changed, enabled = false, onSetWeight, onSetBase, vertical = false, showTips = true }) {
   const geo = useMemo(() => layout(vertical), [vertical]);
   const { s, at, dir } = geo;
   const reduced = usePrefersReducedMotion();
   const wheels = t.net.wheels;
   const hitFresh = hit && now - hit.t < 2200;
   const [editing, setEditing] = useState(null);                  // { i, j }: the weight whose chip is being typed in
+  const [calc, setCalc] = useState(null);                        // the wheel whose neuron's calculation is shown (its "?" was pressed)
   const [held, setHeld] = useState({});                          // weights just set by hand, shown until the robot has confirmed them
   const timers = useRef({});
   useEffect(() => () => Object.values(timers.current).forEach(clearTimeout), []);
@@ -92,8 +101,11 @@ export default function Network({ t, weights, prox, motors, bases, hit, now, cha
       const reading = bias ? 1 : prox[i] || 0;
       const c = bias ? w : contribution(reading, w);
       const from = bias ? baseNode : sensors[i];
-      const d0 = bias ? unit([N.pos[0] - from.pos[0], N.pos[1] - from.pos[1]]) : from.d0;
-      const n = dir(...arrival(i));
+      const side = N.j === LEFT ? -1 : 1;
+      const crossing = (i === 5 && side === 1) || (i === 6 && side === -1);        // a back sensor towards the neuron on the other side
+      const d0 = bias ? unit([N.pos[0] - from.pos[0], N.pos[1] - from.pos[1]])
+        : crossing ? dir(side * Math.sin(CROSS_TILT * RAD), -Math.cos(CROSS_TILT * RAD)) : from.d0;
+      const n = dir(...arrival(i, side));
       const p0 = add(from.pos, d0, from.r);
       const p1 = add(N.pos, n, N.r);
       const k = clamp(0.4 * Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), 24, 170);
@@ -102,7 +114,7 @@ export default function Network({ t, weights, prox, motors, bases, hit, now, cha
       const zero = Math.abs(w) < 0.05;
       const head = 8 + wpx * 0.7;
       const stop = arrowEnds(cp, GAP, zero ? 0 : head);
-      const chipT = i > 4 ? 0.5 : N.j === LEFT ? 0.27 : 0.43;
+      const chipT = crossing ? 0.58 : i > 4 ? 0.5 : i === 2 ? (N.j === LEFT ? 0.27 : 0.43) : (i < 2) === (N.j === LEFT) ? 0.27 : 0.43;       // (the two crossing lines meet in the middle: their numbers are just before that, apart from each other and from the numbers of the base)
       const name = bias ? t.net.bias : t.net.sensors[i];
       const tip = bias
         ? fmt(t.net.tipBias, { wheel: wheels[N.j], w: num(w, 0) })
@@ -162,7 +174,7 @@ export default function Network({ t, weights, prox, motors, bases, hit, now, cha
               <g key={k.key} className={`conn ${k.tone} ${isEd ? 'selected' : ''} ${k.flash ? 'changed' : ''}`}>
                 {showTips && <title>{k.tip}</title>}
                 {isEd && <path d={k.stop.line} className="underlay" style={{ strokeWidth: wpx + 9 }} />}
-                <path d={k.stop.line} className="line" style={{ strokeWidth: zero ? 1 : wpx }} />
+                <path d={k.stop.line} className="line" style={{ strokeWidth: zero ? 1.5 : wpx }} />
                 {flow && !reduced && <path d={k.stop.line} className="flow" style={{ '--dur': `${dur}s`, strokeWidth: Math.min(wpx, 4.5), opacity: clamp(0.35 + Math.abs(k.c) / 40, 0.35, 1) }} />}
                 {/* a wide invisible line to touch */}
                 <path d={k.d} className="hit" onClick={() => open(k)} />
@@ -253,8 +265,11 @@ export default function Network({ t, weights, prox, motors, bases, hit, now, cha
           const numAt = add(N.wheelAt, o, WHEEL.w * s / 2 + (vertical ? 30 : 22));
           const nameAt = vertical ? add(numAt, [0, 1], 22) : add(numAt, o, 24);
           const r = N.r;
+          // the "?" sits on the free diagonal of the rim, at the outer side and towards the tail: no line comes in there
+          const hp = add(N.pos, dir((N.j === LEFT ? -1 : 1) * 0.707, 0.707), r + 5);
+          const asking = calc === N.j;
           return (
-            <g key={N.j} className="neuron out">
+            <g key={N.j} className={`neuron out ${asking ? 'asking' : ''}`}>
               {showTips && <title>{fmt(t.net.wheelTip, { wheel: wheels[N.j], v: num(v, 0) })}</title>}
               <circle cx={N.pos[0]} cy={N.pos[1]} r={r} className="shell" />
               <circle cx={N.pos[0]} cy={N.pos[1]} r={r} className="rim" />
@@ -263,10 +278,24 @@ export default function Network({ t, weights, prox, motors, bases, hit, now, cha
               <path className="out-head" d={head} />
               <text className="speed" x={numAt[0]} y={numAt[1]} textAnchor="middle" dominantBaseline="central">{num(v, 0)}</text>
               <text className="n-name wheel" x={nameAt[0]} y={nameAt[1]} textAnchor="middle" dominantBaseline="central">{vertical ? t.net.wheelsShort[N.j] : wheels[N.j]}</text>
+              <g
+                className="calc-btn" transform={`translate(${hp[0]} ${hp[1]})`} role="button" tabIndex={0} aria-pressed={asking} aria-label={`${t.calc.help} : ${wheels[N.j]}`}
+                onClick={() => setCalc(asking ? null : N.j)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCalc(asking ? null : N.j); } }}
+              >
+                {showTips && <title>{t.calc.help}</title>}
+                <circle r="17" className="calc-hit" />
+                <circle r="10" className="calc-disc" />
+                <text textAnchor="middle" dominantBaseline="central" y="0.5">?</text>
+              </g>
             </g>
           );
         })}
       </svg>
+      {calc != null && (
+        <NeuronHelp
+          t={t} wheel={wheels[calc]} rows={conns.filter((k) => k.j === calc)} speed={motors[calc] || 0} state={state} onClose={() => setCalc(null)}
+        />
+      )}
       {editingConn && (
         <ChipEditor
           key={editingConn.key} t={t} label={`${editingConn.bias ? t.net.bias : t.net.sensors[editingConn.i]} → ${wheels[editingConn.j]}`} value={editingConn.w}

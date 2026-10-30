@@ -253,7 +253,7 @@ export default function App() {
             </header>
             <div ref={netRef} className="net-wrap">
               <Network
-                t={t} weights={brainNow} prox={snap.prox} motors={snap.motors} bases={[snap.params.baseLeft, snap.params.baseRight]} hit={snap.lastHit} now={snap.t} changed={snap.changed}
+                t={t} weights={brainNow} prox={snap.prox} motors={snap.motors} bases={[snap.params.baseLeft, snap.params.baseRight]} state={snap.running ? snap.state : 'pause'} hit={snap.lastHit} now={snap.t} changed={snap.changed}
                 enabled={enabled} onSetWeight={setWeight} onSetBase={setBase} vertical={vertical}
               />
             </div>

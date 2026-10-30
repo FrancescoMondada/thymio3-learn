@@ -76,6 +76,14 @@ const fr = {
   weights: {
     typed: 'Valeur', less: 'Moins', more: 'Plus',
   },
+  calc: {
+    help: 'Comment la roue calcule sa vitesse ?',
+    title: 'Le calcul du neurone · {wheel}',
+    intro: "Chaque entrée apporte une vitesse : lecture ÷ 20 × poids ÷ 30. Le neurone les additionne toutes, et le résultat est la vitesse de la roue. Les nombres changent en direct.",
+    sum: 'Somme', speed: 'Vitesse de la roue', speedNote: 'partie entière, entre −500 et 500',
+    notDriving: 'En ce moment le robot est en « {state} » : la roue ne suit pas le réseau, elle tourne à {v}.',
+    close: 'Fermer',
+  },
   chart: {
     title: 'Les signaux au fil du temps',
     sub: 'Tous les graphiques ont le même axe du temps : ce qui se passe au même instant est aligné de haut en bas. Montre ou cache les signaux pour comparer seulement ceux qui t\'intéressent.',
@@ -207,6 +215,14 @@ const en = {
   },
   weights: {
     typed: 'Value', less: 'Less', more: 'More',
+  },
+  calc: {
+    help: 'How does the wheel work out its speed?',
+    title: "The neuron's calculation · {wheel}",
+    intro: "Each input brings a speed: reading ÷ 20 × weight ÷ 30. The neuron adds them all up, and the result is the wheel's speed. The numbers change live.",
+    sum: 'Sum', speed: 'Wheel speed', speedNote: 'whole part, between −500 and 500',
+    notDriving: 'Right now the robot is in "{state}": the wheel does not follow the network, it runs at {v}.',
+    close: 'Close',
   },
   chart: {
     title: 'Signals over time',
@@ -340,6 +356,14 @@ const it = {
   weights: {
     typed: 'Valore', less: 'Meno', more: 'Più',
   },
+  calc: {
+    help: 'Come calcola la velocità la ruota?',
+    title: 'Il calcolo del neurone · {wheel}',
+    intro: 'Ogni ingresso apporta una velocità: lettura ÷ 20 × peso ÷ 30. Il neurone le somma tutte e il risultato è la velocità della ruota. I numeri cambiano in tempo reale.',
+    sum: 'Somma', speed: 'Velocità della ruota', speedNote: 'parte intera, tra −500 e 500',
+    notDriving: 'In questo momento il robot è in «{state}»: la ruota non segue la rete e va a {v}.',
+    close: 'Chiudi',
+  },
   chart: {
     title: 'I segnali nel tempo',
     sub: "Tutti i grafici hanno lo stesso asse del tempo: ciò che succede nello stesso istante è allineato dall'alto in basso. Mostra o nascondi i segnali per confrontare solo quelli che ti interessano.",
@@ -471,6 +495,14 @@ const de = {
   },
   weights: {
     typed: 'Wert', less: 'Weniger', more: 'Mehr',
+  },
+  calc: {
+    help: 'Wie berechnet das Rad seine Geschwindigkeit?',
+    title: 'Die Rechnung des Neurons · {wheel}',
+    intro: 'Jeder Eingang liefert eine Geschwindigkeit: Wert ÷ 20 × Gewicht ÷ 30. Das Neuron addiert sie alle, und das Ergebnis ist die Geschwindigkeit des Rades. Die Zahlen ändern sich live.',
+    sum: 'Summe', speed: 'Radgeschwindigkeit', speedNote: 'ganzzahliger Teil, zwischen −500 und 500',
+    notDriving: 'Gerade ist der Roboter im Zustand „{state}“: Das Rad folgt dem Netz nicht und dreht mit {v}.',
+    close: 'Schließen',
   },
   chart: {
     title: 'Die Signale im Zeitverlauf',

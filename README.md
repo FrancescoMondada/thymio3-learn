@@ -71,6 +71,16 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
     fond; le réseau est au premier plan: neurones blancs cerclés de noir, traits bleus ou rouges, nombres sur fond blanc, capteurs en
     couleur. Les nombres des connexions sont au-dessus de tous les traits, pour qu'on puisse toujours les toucher. Les cinq capteurs
     de devant sont **à égale distance** les uns des autres (27,5 mm, `src/spec.js`).
+  - **Le talon est rangé**: l'entrée « 1 » est tout au fond; le capteur 6 ou 7 qui est juste derrière un neurone arrive **tout droit, vers
+    son milieu**; l'autre capteur du talon (dont le trait traverse le robot) arrive **du côté du milieu, plus vers l'avant**, hors du
+    fouillis; l'entrée « 1 » arrive entre les deux. Les nombres de ces traits sont placés pour ne pas se recouvrir. Les traits à
+    poids nul sont en gris foncé (pas en gris pâle comme le dessin du robot). Le trou du stylo, au milieu, est sur la ligne de l'axe des
+    roues, comme les deux neurones.
+  - **Un « ? » sur chaque neurone** ouvre une fenêtre avec **le calcul du neurone en direct**: pour chaque entrée, `lecture ÷ 20 × poids ÷ 30`
+    et la vitesse qu'elle apporte, puis la somme et la vitesse de la roue (partie entière, entre −500 et 500). Elle se déplace en tirant
+    son titre (sur un écran étroit elle est en bas) et se ferme avec × ou Échap. Quand le robot recule, apprend ou est en pause, la roue
+    ne suit pas le réseau: la fenêtre le dit et donne la vitesse réelle. Le calcul est celui de `NeuronHelp.jsx` sur les mêmes lignes que
+    le dessin, donc ce qu'on y additionne est ce qu'on voit.
 - **La barre du haut** (deux lignes, toujours visible sur un grand écran; il n'y a plus de colonne à droite): la première a l'icône de
   l'application (elle ouvre les paramètres), le titre, robot virtuel ou réel et le bouton pour connecter un Thymio (avec un robot
   réel: son nom, qui porte le numéro de série, et sa batterie, à côté du bouton);
@@ -190,7 +200,7 @@ npm run build
 | `src/dev/fake-thymio.js`, `src/api.js` | Faux robot Bluetooth (`?fakerobot`); `api.js` choisit le vrai ou le faux |
 | `src/store.js` | Ce que la page sait du robot et son historique |
 | `src/App.jsx` | État, robot virtuel ou réel, clavier, mise en page (onglets sur écran étroit) |
-| `src/components/Network.jsx`, `RobotBody.jsx` | Le robot et son réseau en une image, le dessin du robot (aussi dans l'arène) |
+| `src/components/Network.jsx`, `NeuronHelp.jsx`, `RobotBody.jsx` | Le robot et son réseau en une image, le calcul d'un neurone en direct, le dessin du robot (aussi dans l'arène) |
 | `src/components/Timeline.jsx`, `chartkit.js` | Les signaux au fil du temps (pile de graphiques alignés) |
 | `src/components/ControlBar.jsx`, `Slider.jsx`, `CycleStrip.jsx`, `LinkInfo.jsx`, `Fold.jsx` | La barre de commandes, les curseurs, le cycle et les leçons, le nom et la batterie du robot, les cartes qui se replient |
 | `src/components/Arena.jsx`, `Settings.jsx`, `Help.jsx` | Arène, paramètres (langue, thème, diagnostic), aide |

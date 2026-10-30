@@ -188,7 +188,7 @@ svg.network { display: block; width: 100%; height: auto; overflow: visible; }
 .conn .line { fill: none; stroke-linecap: round; transition: stroke-width 0.35s ease; }
 .conn.pos .line { stroke: var(--pos); }
 .conn.neg .line { stroke: var(--neg); }
-.conn.zero .line { stroke: var(--muted); opacity: 0.7; }
+.conn.zero .line { stroke: var(--ink-2); opacity: 0.85; }
 .conn .underlay { fill: none; stroke: var(--ink); opacity: 0.16; stroke-linecap: round; }
 .conn .flow { fill: none; stroke: #fff; stroke-dasharray: 1.5 13; stroke-linecap: round; animation: flow var(--dur, 1s) linear infinite; pointer-events: none; }
 @keyframes flow { to { stroke-dashoffset: -14.5; } }
@@ -365,6 +365,38 @@ input[type="range"]:disabled { cursor: not-allowed; }
 .fold-btn svg.open { transform: rotate(90deg); }
 .card.folded .card-head { margin-bottom: 0; }
 
+/* ---- the "?" of a neuron and its calculation ---------------------------------------------------- */
+.calc-btn { cursor: pointer; outline: none; }
+.calc-hit { fill: transparent; }
+.calc-disc { fill: var(--surface); stroke: var(--ink); stroke-width: 2; transition: fill 0.12s; }
+.calc-btn text { font-size: 14px; font-weight: 700; fill: var(--ink); pointer-events: none; }
+.calc-btn:hover .calc-disc, .neuron.asking .calc-disc { fill: var(--ink); }
+.calc-btn:hover text, .neuron.asking .calc-btn text { fill: var(--surface); }
+.calc-btn:focus-visible .calc-disc { stroke: var(--focus); stroke-width: 3.5; }
+.neuron.asking .rim { stroke-width: 5; }
+.neuron-help { position: fixed; z-index: 45; right: 16px; bottom: 16px; width: min(390px, calc(100vw - 24px)); max-height: calc(100vh - 150px); overflow: auto; padding: 0 14px 14px; background: var(--surface); border: 1.5px solid var(--ink); border-radius: 14px; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35); }
+.neuron-help header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0 6px; background: var(--surface); cursor: grab; touch-action: none; user-select: none; }
+.neuron-help header:active { cursor: grabbing; }
+.neuron-help header h3 { margin: 0; font-size: 14.5px; }
+.calc-short { display: none; }
+.calc-rows { list-style: none; margin: 8px 0 4px; padding: 0; }
+.calc-row { display: grid; grid-template-columns: 8.6em minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.calc-name { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; min-width: 0; white-space: nowrap; }
+.calc-name .one { font: 700 11px var(--mono); font-style: normal; padding: 1px 8px; border-radius: 999px; background: var(--ink); color: var(--surface); }
+.calc-val { font: 700 15px var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.calc-row.pos .calc-val { color: var(--pos); }
+.calc-row.neg .calc-val { color: var(--neg); }
+.calc-row.zero .calc-val, .calc-row.zero .calc-name { color: var(--muted); }
+.calc-row.zero .calc-name { font-weight: 500; }
+.calc-expr { font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.calc-sum { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 10px 0 0; align-items: baseline; }
+.calc-sum dt { font-weight: 700; font-size: 14px; }
+.calc-sum dd { margin: 0; font: 700 16px var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.calc-sum dd.pos { color: var(--pos); }
+.calc-sum dd.neg { color: var(--neg); }
+.calc-sum dd.big { font-size: 28px; color: var(--ink); }
+.calc-note { margin: 10px 0 0; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--warning) 16%, var(--surface)); font-size: 13px; }
+
 /* ---- the signals over time ----------------------------------------------------------------- */
 .timeline .card-head { flex-wrap: wrap; }
 .timeline .card-head > div:first-child { flex: 1 1 260px; min-width: 0; }
@@ -474,6 +506,14 @@ kbd { font: 600 12px var(--mono); padding: 2px 7px; border-radius: 6px; border: 
 .tabbar button.on { color: var(--ink); border-top-color: var(--ink); }
 
 @media (max-width: 1000px) {
+  .neuron-help { left: 8px; right: 8px; bottom: 60px; width: auto; max-height: 56vh; }
+  .neuron-help header { cursor: default; touch-action: auto; }
+  .neuron-help { max-height: 52vh; }
+  .neuron-help > p { display: none; }
+  .calc-row { grid-template-columns: 4.4em minmax(0, 1fr) auto; gap: 0 8px; padding: 4px 0; }
+  .calc-full { display: none; }
+  .calc-short { display: inline; }
+  .calc-note { font-size: 12.5px; }
   main { padding: 12px 12px 76px; }
   [data-tab] { display: none; }
   .tab-net [data-tab="net"], .tab-settings [data-tab="settings"], .tab-curves [data-tab="curves"], .tab-arena [data-tab="arena"] { display: block; }
