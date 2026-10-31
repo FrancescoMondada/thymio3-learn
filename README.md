@@ -130,7 +130,7 @@ est refusée ou absente) et applique tout d'un coup. Le bouton bleu est grisé t
 - **Le pseudo sous le code** (`src/names.js`): avec la date et l'heure, écrit en grand sous le code pour reconnaître sur une photo l'appareil dont il vient.
   Chaque appareil en tire un au hasard au premier lancement, **dans le style des pseudos de jeux en ligne** pour des 12 à 14 ans: un mot de science ou de
   vitesse et une créature, collés, puis deux chiffres (`NeonFalcon42`, `QuantumLynx07`; 46 × 38 × 90 = environ 157 000 pseudos, les mêmes mots dans les
-  quatre langues, donc sans accord grammatical). On le change dans les paramètres (champ et dé), et le réglage **« Afficher le pseudo »** (oui par défaut) le cache; vide ou caché, seule la date reste. Il n'est pas dans le code.
+  quatre langues, donc sans accord grammatical). On le change dans les paramètres (champ et dé), et le réglage **« Afficher le pseudo »** (**non par défaut**: sans ce réglage, seule la date est écrite sous le code) l'affiche; vide ou caché, seule la date reste. Il n'est pas dans le code.
 - Même format que le robot: le code est appliqué comme les curseurs et les pastilles (deux messages de trames sur un vrai robot).
 
 ## Comment ça marche avec un vrai robot

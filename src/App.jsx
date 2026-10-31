@@ -39,7 +39,8 @@ export default function App() {
   const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState('');
   const [qr, setQr] = useState(null);                                 // the QR code shown ({ show, caption }) or the scanner ({ scan })
-  const [showName, setShowName] = useState(() => load('learn.showname', '1') === '1');   // the pseudonym is written under the QR code (the adult can turn it off)
+  const [showName, setShowName] = useState(() => load('learn.pseudo.show', '0') === '1');   // the pseudonym is written under the QR code only when the adult turns it on (kept only once chosen)
+  const chooseShowName = (v) => { setShowName(v); save('learn.pseudo.show', v ? '1' : '0'); };
   const [name, setName] = useState(() => { const kept = load('learn.name', null); return kept === null ? randomName() : cleanName(kept); });   // under the QR code, drawn at random the first time
   const bluetooth = supportsBluetooth();
 
@@ -66,7 +67,6 @@ export default function App() {
     save('learn.theme', theme);
   }, [theme]);
   useEffect(() => { save('learn.name', name); }, [name]);
-  useEffect(() => { save('learn.showname', showName ? '1' : '0'); }, [showName]);
   useEffect(() => { document.documentElement.lang = lang; save('learn.lang', lang); document.title = t.app.title; }, [lang, t.app.title]);
 
   // ---- the virtual robot's clock ---------------------------------------------------------------------
@@ -320,7 +320,7 @@ export default function App() {
       {settings && (
         <Settings
           t={t} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
-          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={setShowName}
+          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={chooseShowName}
           log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}
