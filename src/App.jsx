@@ -8,13 +8,17 @@ import LinkInfo from './components/LinkInfo.jsx';
 import LearningRule from './components/LearningRule.jsx';
 import Settings from './components/Settings.jsx';
 import Help from './components/Help.jsx';
-import { BluetoothIcon, HelpIcon, WarnIcon } from './icons.jsx';
+import QrShow from './components/QrShow.jsx';
+import QrScan from './components/QrScan.jsx';
+import { BluetoothIcon, HelpIcon, QrIcon, ScanIcon, WarnIcon } from './icons.jsx';
 import { I18N, detectLang } from './i18n.js';
 import { Telemetry } from './store.js';
 import { SimBackend } from './sim/sim-backend.js';
 import { RobotBackend } from './robot/robot-backend.js';
 import { supportsBluetooth } from './api.js';
 import { CMD } from './protocol.js';
+import { configChange, decodeConfig, encodeConfig } from './share.js';
+import { cleanName, formatWhen, randomName } from './names.js';
 import { useMedia, useSize } from './util.js';
 
 const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch { return fallback; } };
@@ -34,6 +38,8 @@ export default function App() {
   const [log, setLog] = useState([]);
   const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState('');
+  const [qr, setQr] = useState(null);                                 // the QR code shown ({ show, caption }) or the scanner ({ scan })
+  const [name, setName] = useState(() => { const kept = load('learn.name', null); return kept === null ? randomName() : cleanName(kept); });   // under the QR code, drawn at random the first time
   const bluetooth = supportsBluetooth();
 
   const tele = useRef(null);
@@ -58,6 +64,7 @@ export default function App() {
     else document.documentElement.setAttribute('data-theme', theme);
     save('learn.theme', theme);
   }, [theme]);
+  useEffect(() => { save('learn.name', name); }, [name]);
   useEffect(() => { document.documentElement.lang = lang; save('learn.lang', lang); document.title = t.app.title; }, [lang, t.app.title]);
 
   // ---- the virtual robot's clock ---------------------------------------------------------------------
@@ -160,6 +167,22 @@ export default function App() {
   const setBase = useCallback((wheel, v) => send({ [wheel === 0 ? 'baseLeft' : 'baseRight']: v }), [send]);
   const applyPreset = useCallback((p) => send(weightChange(p.left, p.right)), [send]);
 
+  // ---- the QR code of the configuration: what it shows, and what a scanned one sets up (share.js) -------------------
+  const showQr = () => setQr({
+    show: encodeConfig({ lang, ...snap.params, weights: snap.weights }),
+    caption: { name: name.trim(), when: formatWhen(new Date(), lang) },
+  });
+  const scanQr = () => setQr({ scan: true });
+  const applyScanned = useCallback((text) => {
+    const cfg = decodeConfig(text);
+    if (!cfg) return false;
+    if (cfg.lang) setLang(cfg.lang);
+    const change = configChange(cfg);
+    if (Object.keys(change).length) send(change);
+    setTimeout(() => setQr(null), 700);                           // the frame goes green for a moment
+    return true;
+  }, [send]);
+
   const selfTest = useCallback(async () => {
     if (!robot.current) return;
     setTesting(true);
@@ -224,6 +247,8 @@ export default function App() {
           <div className="top-end">
             {live && link.status === 'connected' && <button type="button" className="btn small" onClick={disconnect}>{t.head.disconnect}</button>}
             {!live && bluetooth && <button type="button" className="btn small hide-narrow" onClick={connect}><BluetoothIcon size={16} />{t.head.connect}</button>}
+            <button type="button" className="icon-btn" onClick={showQr} aria-label={t.qr.show} title={t.qr.show}><QrIcon /></button>
+            <button type="button" className="icon-btn scan" onClick={scanQr} disabled={!enabled} aria-label={t.qr.scan} title={t.qr.scan}><ScanIcon /></button>
             <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
           </div>
         </header>
@@ -287,10 +312,13 @@ export default function App() {
         ))}
       </nav>
 
+      {qr && qr.show !== undefined && <QrShow text={qr.show} t={t} caption={qr.caption} onClose={() => setQr(null)} />}
+      {qr && qr.scan && <QrScan t={t} onText={applyScanned} onClose={() => setQr(null)} />}
       {help && <Help t={t} onClose={() => { setHelp(false); save('learn.help', '1'); }} />}
       {settings && (
         <Settings
           t={t} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
+          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())}
           log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}

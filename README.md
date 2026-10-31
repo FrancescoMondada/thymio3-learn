@@ -114,6 +114,25 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
 
 Clavier: Espace = pause, G = geler, 0 = tout oublier, D = paramètres.
 
+### Passer la configuration aux élèves (code QR)
+
+Deux boutons en haut à droite, à côté de l'aide, comme dans l'application à cartes (`thymio3-cards`): **le bouton blanc** affiche en grand le code
+QR de la configuration actuelle, **le bouton bleu** scanne le code d'un autre appareil (caméra derrière un viseur, ou une photo du code si la caméra
+est refusée ou absente) et applique tout d'un coup. Le bouton bleu est grisé tant que le mode ne tourne pas (robot en cours de connexion).
+
+- **Ce que contient le code** (`src/share.js`, texte `T3L1;l=fr;s=30;b=670,670;f=16;w=90,60,0,…`, une centaine de caractères, un code de 37 modules,
+  facile à scanner à travers une salle): la langue, la vitesse d'apprentissage, les deux vitesses de base (celles de l'entrée « 1 »), le délai
+  d'oubli et **les 14 poids**. Les nombres sont ceux du protocole avec le robot (dixièmes). Un enseignant règle un cerveau, l'affiche, les élèves le
+  scannent; un élève peut aussi montrer le cerveau que son robot a appris, et l'enseignant le photographie.
+- **Lecture stricte**: ce qui vient d'un scan est une donnée, jamais exécutée. Un champ invalide est ignoré, un champ absent laisse cette partie de la
+  page telle quelle, un code d'une autre application (celui des cartes est `T3C1`) est refusé avec un message. Le thème, l'état gelé ou en pause
+  et l'arène ne voyagent pas.
+- **Le pseudo sous le code** (`src/names.js`): avec la date et l'heure, écrit en grand sous le code pour reconnaître sur une photo l'appareil dont il vient.
+  Chaque appareil en tire un au hasard au premier lancement, **dans le style des pseudos de jeux en ligne** pour des 12 à 14 ans: un mot de science ou de
+  vitesse et une créature, collés, puis deux chiffres (`NeonFalcon42`, `QuantumLynx07`; 46 × 38 × 90 = environ 157 000 pseudos, les mêmes mots dans les
+  quatre langues, donc sans accord grammatical). On le change dans les paramètres (champ et dé); vide, seule la date reste. Il n'est pas dans le code.
+- Même format que le robot: le code est appliqué comme les curseurs et les pastilles (deux messages de trames sur un vrai robot).
+
 ## Comment ça marche avec un vrai robot
 
 ```
@@ -180,10 +199,12 @@ npm run build
 - `tests/link.test.js`: la liaison complète (connexion, module installé une fois, lanceur, changements, commandes, curseur glissé,
   trames perdues → relance sans perte) contre le faux robot Bluetooth.
 - `tests/arena.test.js`, `tests/store.test.js` (et les textes: aucune clé de langue manquante).
+- `tests/share.test.js`, `tests/qr.test.js`, `tests/names.test.js`: le format du code (aller-retour, lecture stricte), un code dessiné puis relu par jsQR, les pseudos.
 - La page a été regardée dans un navigateur (ordinateur, 375 × 812, 360 × 640, 844 × 390; clair et sombre; robot virtuel et faux robot).
 
 **Pas vérifié, à regarder avec un vrai robot:**
 
+- le code QR avec **une vraie caméra** (le navigateur de test la bloque): vérifié en lisant une photo du code affiché, pas à travers une caméra, et sur un robot virtuel seulement;
 - le débit de la sortie: une ligne de 100 octets toutes les 100 ms, plus les lignes de poids. Le firmware envoie stdout par paquets de
   100 octets; si la liaison peine, la boucle du mode ralentit sans s'arrêter, mais la page serait moins fluide;
 - les changements pendant que le robot roule (les trames portent les vitesses courantes; un à-coup des roues serait visible);
@@ -210,5 +231,6 @@ npm run build
 | `src/components/Timeline.jsx`, `chartkit.js` | Les signaux au fil du temps (pile de graphiques alignés) |
 | `src/components/ControlBar.jsx`, `Slider.jsx`, `CycleStrip.jsx`, `LinkInfo.jsx`, `Fold.jsx` | La barre de commandes, les curseurs, le cycle et les leçons, le nom et la batterie du robot, les cartes qui se replient |
 | `src/components/Arena.jsx`, `Settings.jsx`, `Help.jsx` | Arène, paramètres (langue, thème, diagnostic), aide |
+| `src/share.js`, `src/qr.js`, `src/names.js`, `src/components/QrShow.jsx`, `QrScan.jsx` | Le code QR de la configuration (format, dessin et lecture), les pseudos, l'affichage plein écran et le lecteur |
 | `src/i18n.js`, `src/styles.css` | Textes (FR, EN) et style (couleurs en jetons, clair et sombre) |
 | `tests/` | `node --test`, liaison, Python (`test_ann_mode.py`, `fake_ann_robot.py`) |

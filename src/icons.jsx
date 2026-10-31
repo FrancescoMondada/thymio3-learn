@@ -38,3 +38,41 @@ export const RobotIcon = (p) => <I {...p}><path d="M5 20V9q0-5 7-5t7 5v11z" /><c
 export const CubeIcon = (p) => <I {...p}><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" /></I>;
 export const ChevronIcon = (p) => <I {...p}><path d="M9 6l6 6-6 6" /></I>;
 export const BatteryIcon = (p) => <I {...p}><rect x="2.5" y="7" width="16" height="10" rx="2" /><path d="M21 10.5v3M6 10.5v3M10 10.5v3" /></I>;
+
+// The QR code of the page (to show it), the eye in a viewfinder (to scan another one: not a QR code, so that the two buttons are
+// told apart), a camera that does not work, a picture, and a die (to draw another pseudonym). Drawn on a 64 x 64 grid.
+const B = { viewBox: '0 0 64 64', strokeWidth: 4.5 };
+export const QrIcon = (p) => (
+  <I {...B} strokeLinejoin="round" {...p}>
+    <rect x="7" y="7" width="20" height="20" rx="3" /><rect x="37" y="7" width="20" height="20" rx="3" /><rect x="7" y="37" width="20" height="20" rx="3" />
+    <rect x="13" y="13" width="8" height="8" fill="currentColor" stroke="none" /><rect x="43" y="13" width="8" height="8" fill="currentColor" stroke="none" /><rect x="13" y="43" width="8" height="8" fill="currentColor" stroke="none" />
+    <path d="M37 40 h7 M50 40 h7 M37 48 v9 M44 47 h6 M54 47 v10 M44 56 h4" />
+  </I>
+);
+export const ScanIcon = (p) => (
+  <I {...B} strokeWidth="5" {...p}>
+    <path d="M6 22 V12 a6 6 0 0 1 6-6 h10 M42 6 h10 a6 6 0 0 1 6 6 v10 M58 42 v10 a6 6 0 0 1-6 6 H42 M22 58 H12 a6 6 0 0 1-6-6 V42" />
+    <path d="M13 32 C 21 21 43 21 51 32 C 43 43 21 43 13 32 Z" strokeWidth="4.5" />
+    <circle cx="32" cy="32" r="6.5" fill="currentColor" stroke="none" />
+  </I>
+);
+export const CameraOffIcon = (p) => (
+  <I {...B} {...p}>
+    <path d="M10 20 h8 l4-6 h20 l4 6 h8 a4 4 0 0 1 4 4 v22 a4 4 0 0 1-4 4 H10 a4 4 0 0 1-4-4 V24 a4 4 0 0 1 4-4z" />
+    <circle cx="32" cy="35" r="9" />
+    <path d="M8 8 L56 56" stroke="#ef4444" strokeWidth="6" />
+  </I>
+);
+export const ImageIcon = (p) => (
+  <I {...B} {...p}>
+    <rect x="7" y="10" width="50" height="44" rx="7" /><circle cx="22" cy="25" r="5" fill="currentColor" stroke="none" /><path d="M9 48 L25 33 L35 42 L43 34 L55 46" />
+  </I>
+);
+export const DiceIcon = (p) => (
+  <I {...B} strokeLinejoin="round" {...p}>
+    <rect x="8" y="8" width="48" height="48" rx="11" />
+    <circle cx="22" cy="22" r="3.6" fill="currentColor" stroke="none" /><circle cx="42" cy="22" r="3.6" fill="currentColor" stroke="none" />
+    <circle cx="32" cy="32" r="3.6" fill="currentColor" stroke="none" />
+    <circle cx="22" cy="42" r="3.6" fill="currentColor" stroke="none" /><circle cx="42" cy="42" r="3.6" fill="currentColor" stroke="none" />
+  </I>
+);

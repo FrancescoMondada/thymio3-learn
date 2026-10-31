@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CloseIcon, CopyIcon, DownloadIcon } from '../icons.jsx';
+import { CloseIcon, CopyIcon, DiceIcon, DownloadIcon } from '../icons.jsx';
+import { NAME_MAX } from '../names.js';
 import { LANGS } from '../i18n.js';
 import { SOURCE_TEXT } from '../script.js';
 
 // The settings, from the gear at the top left: the language (Italian, French, German, English), the theme, and what used to be the
 // link diagnostics, for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot),
 // a test of the link, the Python that runs on the robot, the keys.
-export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
+export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -54,7 +55,16 @@ export default function Settings({ t, lang, onLang, theme, onTheme, link, batter
               {[['auto', 'Auto'], ['light', t.head.themeLight], ['dark', t.head.themeDark]].map(([id, label]) => <button key={id} type="button" className={theme === id ? 'on' : ''} aria-pressed={theme === id} onClick={() => onTheme(id)}>{label}</button>)}
             </div>
           </div>
+          <div className="row">
+            <label className="row-label" htmlFor="pseudo">{t.qr.nameRow}</label>
+            <div className="name-field">
+              <input id="pseudo" type="text" value={name} maxLength={NAME_MAX} autoComplete="off" autoCapitalize="off" spellCheck={false} aria-label={t.qr.nameField} onChange={(e) => onName(e.target.value)} />
+              <button type="button" className="icon-btn" onClick={onNewName} aria-label={t.qr.nameDraw} title={t.qr.nameDraw}><DiceIcon /></button>
+            </div>
+          </div>
         </div>
+        <p className="muted small">{t.qr.nameHint}</p>
+        <p className="muted small">{t.qr.holds}</p>
 
         <h3>{t.diag.robot}</h3>
         <dl className="facts">
