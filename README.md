@@ -116,7 +116,7 @@ Clavier: Espace = pause, G = geler, 0 = tout oublier, D = paramètres.
 
 ### Passer la configuration aux élèves (code QR)
 
-Deux boutons en haut à droite, à côté de l'aide, comme dans l'application à cartes (`thymio3-cards`): **le bouton blanc** affiche en grand le code
+Deux boutons en haut à droite, à côté de l'aide (trois boutons carrés de même taille, bordés comme les autres boutons de la barre; la barre du haut a une seule hauteur de contrôle, 34 px, un seul rayon et une seule bordure), comme dans l'application à cartes (`thymio3-cards`): **le bouton blanc** affiche en grand le code
 QR de la configuration actuelle, **le bouton bleu** scanne le code d'un autre appareil (caméra derrière un viseur, ou une photo du code si la caméra
 est refusée ou absente) et applique tout d'un coup. Le bouton bleu est grisé tant que le mode ne tourne pas (robot en cours de connexion).
 
@@ -130,7 +130,7 @@ est refusée ou absente) et applique tout d'un coup. Le bouton bleu est grisé t
 - **Le pseudo sous le code** (`src/names.js`): avec la date et l'heure, écrit en grand sous le code pour reconnaître sur une photo l'appareil dont il vient.
   Chaque appareil en tire un au hasard au premier lancement, **dans le style des pseudos de jeux en ligne** pour des 12 à 14 ans: un mot de science ou de
   vitesse et une créature, collés, puis deux chiffres (`NeonFalcon42`, `QuantumLynx07`; 46 × 38 × 90 = environ 157 000 pseudos, les mêmes mots dans les
-  quatre langues, donc sans accord grammatical). On le change dans les paramètres (champ et dé); vide, seule la date reste. Il n'est pas dans le code.
+  quatre langues, donc sans accord grammatical). On le change dans les paramètres (champ et dé), et le réglage **« Afficher le pseudo »** (oui par défaut) le cache; vide ou caché, seule la date reste. Il n'est pas dans le code.
 - Même format que le robot: le code est appliqué comme les curseurs et les pastilles (deux messages de trames sur un vrai robot).
 
 ## Comment ça marche avec un vrai robot

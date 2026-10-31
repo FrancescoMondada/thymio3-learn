@@ -39,6 +39,7 @@ export default function App() {
   const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState('');
   const [qr, setQr] = useState(null);                                 // the QR code shown ({ show, caption }) or the scanner ({ scan })
+  const [showName, setShowName] = useState(() => load('learn.showname', '1') === '1');   // the pseudonym is written under the QR code (the adult can turn it off)
   const [name, setName] = useState(() => { const kept = load('learn.name', null); return kept === null ? randomName() : cleanName(kept); });   // under the QR code, drawn at random the first time
   const bluetooth = supportsBluetooth();
 
@@ -65,6 +66,7 @@ export default function App() {
     save('learn.theme', theme);
   }, [theme]);
   useEffect(() => { save('learn.name', name); }, [name]);
+  useEffect(() => { save('learn.showname', showName ? '1' : '0'); }, [showName]);
   useEffect(() => { document.documentElement.lang = lang; save('learn.lang', lang); document.title = t.app.title; }, [lang, t.app.title]);
 
   // ---- the virtual robot's clock ---------------------------------------------------------------------
@@ -170,7 +172,7 @@ export default function App() {
   // ---- the QR code of the configuration: what it shows, and what a scanned one sets up (share.js) -------------------
   const showQr = () => setQr({
     show: encodeConfig({ lang, ...snap.params, weights: snap.weights }),
-    caption: { name: name.trim(), when: formatWhen(new Date(), lang) },
+    caption: { name: showName ? name.trim() : '', when: formatWhen(new Date(), lang) },
   });
   const scanQr = () => setQr({ scan: true });
   const applyScanned = useCallback((text) => {
@@ -247,9 +249,9 @@ export default function App() {
           <div className="top-end">
             {live && link.status === 'connected' && <button type="button" className="btn small" onClick={disconnect}>{t.head.disconnect}</button>}
             {!live && bluetooth && <button type="button" className="btn small hide-narrow" onClick={connect}><BluetoothIcon size={16} />{t.head.connect}</button>}
-            <button type="button" className="icon-btn" onClick={showQr} aria-label={t.qr.show} title={t.qr.show}><QrIcon /></button>
-            <button type="button" className="icon-btn scan" onClick={scanQr} disabled={!enabled} aria-label={t.qr.scan} title={t.qr.scan}><ScanIcon /></button>
-            <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
+            <button type="button" className="icon-btn bar-btn" onClick={showQr} aria-label={t.qr.show} title={t.qr.show}><QrIcon /></button>
+            <button type="button" className="icon-btn bar-btn scan" onClick={scanQr} disabled={!enabled} aria-label={t.qr.scan} title={t.qr.scan}><ScanIcon /></button>
+            <button type="button" className="icon-btn bar-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
           </div>
         </header>
         {wide && <ControlBar t={t} state={snap.state} learning={snap.learning} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} />}
@@ -318,7 +320,7 @@ export default function App() {
       {settings && (
         <Settings
           t={t} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
-          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())}
+          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={setShowName}
           log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}

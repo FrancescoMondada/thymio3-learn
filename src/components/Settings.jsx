@@ -7,7 +7,7 @@ import { SOURCE_TEXT } from '../script.js';
 // The settings, from the gear at the top left: the language (Italian, French, German, English), the theme, and what used to be the
 // link diagnostics, for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot),
 // a test of the link, the Python that runs on the robot, the keys.
-export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
+export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -60,6 +60,13 @@ export default function Settings({ t, lang, onLang, theme, onTheme, link, batter
             <div className="name-field">
               <input id="pseudo" type="text" value={name} maxLength={NAME_MAX} autoComplete="off" autoCapitalize="off" spellCheck={false} aria-label={t.qr.nameField} onChange={(e) => onName(e.target.value)} />
               <button type="button" className="icon-btn" onClick={onNewName} aria-label={t.qr.nameDraw} title={t.qr.nameDraw}><DiceIcon /></button>
+            </div>
+          </div>
+          <div className="row">
+            <span className="row-label" id="show-name-label">{t.qr.nameShow}</span>
+            <div className="seg" role="group" aria-labelledby="show-name-label">
+              <button type="button" className={showName ? 'on' : ''} aria-pressed={showName} onClick={() => onShowName(true)}>{t.qr.yes}</button>
+              <button type="button" className={!showName ? 'on' : ''} aria-pressed={!showName} onClick={() => onShowName(false)}>{t.qr.no}</button>
             </div>
           </div>
         </div>
