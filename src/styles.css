@@ -613,3 +613,5 @@ kbd { font: 600 12px var(--mono); padding: 2px 7px; border-radius: 6px; border: 
 .bar-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .bar-btn.scan { background: var(--pos); border-color: var(--pos); color: #fff; }
 .bar-btn.scan:hover:not(:disabled) { background: var(--pos); color: #fff; filter: brightness(1.12); }
+
+a.app-link { color: inherit; text-decoration: underline; overflow-wrap: anywhere; }

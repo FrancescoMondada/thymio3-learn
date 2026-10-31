@@ -48,3 +48,18 @@ test('the path draws exactly the dark modules', () => {
   for (let r = 0; r < code.size; r++) for (let c = 0; c < code.size; c++) if (code.dark(r, c)) dark++;
   assert.equal(area, dark);
 });
+
+test('the links of the application are codes a camera reads back: the plain address, and the one of Bluefy', async () => {
+  const { APP_LINKS, APP_URL } = await import('../src/share.js');
+  assert.equal(APP_LINKS.web, APP_URL);
+  assert.match(APP_URL, /^https:\/\/francescomondada\.github\.io\/thymio3-learn\/$/);
+  assert.equal(APP_LINKS.ios, `bluefy://open?url=${encodeURIComponent(APP_URL)}`);
+  for (const [kind, text] of Object.entries(APP_LINKS)) {
+    const code = qrMatrix(text);
+    assert.ok(code && code.size <= 41, `${kind}: ${code?.size} modules`);
+    assert.equal(await readQr(picture(code)), text, kind);
+  }
+  // a link that names Chrome through an intent is not opened by every camera (a Samsung takes it for text): there is none
+  assert.deepEqual(Object.keys(APP_LINKS).sort(), ['ios', 'web']);
+  for (const text of Object.values(APP_LINKS)) assert.doesNotMatch(text, /^intent:/);
+});

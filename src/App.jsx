@@ -17,7 +17,7 @@ import { SimBackend } from './sim/sim-backend.js';
 import { RobotBackend } from './robot/robot-backend.js';
 import { supportsBluetooth } from './api.js';
 import { CMD } from './protocol.js';
-import { configChange, decodeConfig, encodeConfig } from './share.js';
+import { APP_LINKS, configChange, decodeConfig, encodeConfig } from './share.js';
 import { cleanName, formatWhen, randomName } from './names.js';
 import { useMedia, useSize } from './util.js';
 
@@ -175,6 +175,7 @@ export default function App() {
     caption: { name: showName ? name.trim() : '', when: formatWhen(new Date(), lang) },
   });
   const scanQr = () => setQr({ scan: true });
+  const showLink = (kind) => { if (APP_LINKS[kind]) { setSettings(false); setQr({ show: APP_LINKS[kind], link: kind }); } };      // from the settings: the address of the application, for the devices of the class
   const applyScanned = useCallback((text) => {
     const cfg = decodeConfig(text);
     if (!cfg) return false;
@@ -314,13 +315,13 @@ export default function App() {
         ))}
       </nav>
 
-      {qr && qr.show !== undefined && <QrShow text={qr.show} t={t} caption={qr.caption} onClose={() => setQr(null)} />}
+      {qr && qr.show !== undefined && <QrShow text={qr.show} t={t} label={qr.link ? { web: t.qr.link, ios: t.qr.linkIos }[qr.link] : t.qr.show} caption={qr.caption} onClose={() => setQr(null)} />}
       {qr && qr.scan && <QrScan t={t} onText={applyScanned} onClose={() => setQr(null)} />}
       {help && <Help t={t} onClose={() => { setHelp(false); save('learn.help', '1'); }} />}
       {settings && (
         <Settings
           t={t} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
-          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={chooseShowName}
+          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={chooseShowName} onShowLink={showLink}
           log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}

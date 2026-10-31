@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CloseIcon, CopyIcon, DiceIcon, DownloadIcon } from '../icons.jsx';
+import { CloseIcon, CopyIcon, DiceIcon, DownloadIcon, QrIcon } from '../icons.jsx';
 import { NAME_MAX } from '../names.js';
+import { APP_URL } from '../share.js';
 import { LANGS } from '../i18n.js';
 import { SOURCE_TEXT } from '../script.js';
 
 // The settings, from the gear at the top left: the language (Italian, French, German, English), the theme, and what used to be the
 // link diagnostics, for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot),
 // a test of the link, the Python that runs on the robot, the keys.
-export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
+export default function Settings({ t, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, onShowLink, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -45,6 +46,14 @@ export default function Settings({ t, lang, onLang, theme, onTheme, link, batter
         {!bluetooth && <p className="warn" role="alert">{t.head.noBluetooth}</p>}
 
         <div className="rows">
+          <div className="row">
+            <span className="row-label">{t.qr.linkRow}</span>
+            <div className="chips">
+              <button type="button" className="btn small" onClick={() => onShowLink('web')}><QrIcon size={18} />{t.qr.linkButton}</button>
+              <button type="button" className="btn small" onClick={() => onShowLink('ios')}><QrIcon size={18} />{t.qr.linkIos}</button>
+            </div>
+          </div>
+          <p className="muted small">{t.qr.linkHint} <a className="app-link" href={APP_URL} target="_blank" rel="noopener noreferrer">{APP_URL.replace(/^https:\/\//, '')}</a></p>
           <div className="row">
             <span className="row-label">{t.diag.language}</span>
             <div className="chips">{LANGS.map((l) => <button key={l.id} type="button" className="chip-btn" lang={l.id} aria-pressed={lang === l.id} onClick={() => onLang(l.id)}>{l.label}</button>)}</div>

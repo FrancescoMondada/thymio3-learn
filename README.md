@@ -132,6 +132,13 @@ est refusée ou absente) et applique tout d'un coup. Le bouton bleu est grisé t
   vitesse et une créature, collés, puis deux chiffres (`NeonFalcon42`, `QuantumLynx07`; 46 × 38 × 90 = environ 157 000 pseudos, les mêmes mots dans les
   quatre langues, donc sans accord grammatical). On le change dans les paramètres (champ et dé), et le réglage **« Afficher le pseudo »** (**non par défaut**: sans ce réglage, seule la date est écrite sous le code) l'affiche; vide ou caché, seule la date reste. Il n'est pas dans le code.
 - Même format que le robot: le code est appliqué comme les curseurs et les pastilles (deux messages de trames sur un vrai robot).
+- **Le lien vers l'application** (tout en haut des paramètres, comme dans l'application à cartes): deux boutons affichent en plein écran un code QR
+  que les élèves scannent pour ouvrir l'application, **« Code QR générique »** (l'adresse `https://francescomondada.github.io/thymio3-learn/`,
+  que l'appareil ouvre dans son navigateur: Chrome ou Samsung Internet sur Android) et **« iOS · Bluefy »** (`bluefy://open?url=` et l'adresse,
+  pour Bluefy sur iPhone et iPad). L'adresse écrite est celle de GitHub (`APP_URL` dans `src/share.js`), jamais celle de la page courante, pour
+  qu'un enseignant sur `localhost` donne quand même un lien qui marche. **Pas de code pour Chrome sur Android** (un lien `intent://` n'est pas
+  ouvert par l'appareil photo d'un Samsung); un test l'interdit. **Le format de Bluefy n'est pas vérifié** (à essayer sur un iPad: si `open?url=`
+  ne marche pas, `APP_LINKS.ios` est le seul endroit à changer).
 
 ## Comment ça marche avec un vrai robot
 

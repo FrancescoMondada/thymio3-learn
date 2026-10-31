@@ -14,6 +14,16 @@ import { RANGES, W_LIMIT } from './spec.js';
 
 export const PREFIX = 'T3L1';
 export const APP_URL = 'https://francescomondada.github.io/thymio3-learn/';
+// What the QR code of the application can hold, by the browser it should open in. `web`: the plain address, opened by the camera's own
+// choice of browser (Chrome or Samsung Internet on Android, both with Web Bluetooth). `ios`: the custom scheme of Bluefy, the browser
+// with Web Bluetooth for iPhone and iPad, that must be installed; Bluefy's own documentation does not give the form of its link, so
+// `open?url=` with the encoded address is the usual one and the thing to check on an iPad first.
+// There is no code for Chrome on Android: an `intent://` link naming Chrome is not opened by the camera of a Samsung (it takes anything
+// that is not a web link for text), and a link that only some scanners open is worse than none.
+export const APP_LINKS = {
+  web: APP_URL,
+  ios: `bluefy://open?url=${encodeURIComponent(APP_URL)}`,
+};
 export const MAX_TEXT = 400;                                   // a longer text is not ours (ours is about 120 characters at most)
 
 const STEP_MAX = RANGES.step.max * 10;
