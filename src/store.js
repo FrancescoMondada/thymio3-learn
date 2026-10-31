@@ -16,6 +16,7 @@ function fresh() {
     link: { status: 'idle', device: '', firmware: null, error: '' },
     running: false,                       // the mode has said hello and not goodbye
     state: 'drive',
+    learning: true,                       // the robot learns from its hits (false: frozen, and it stays so through a pause)
     prox: zeros(7),
     motors: [0, 0],
     learnt: 0,                            // lessons held, 0..16 (the Lego LEDs)
@@ -76,6 +77,7 @@ export class Telemetry {
       case 'state': s.state = ev.state; break;
       case 'n':
         s.state = ev.state;
+        s.learning = ev.learning ?? ev.state !== 'freeze';
         s.prox = ev.prox;
         s.motors = ev.motors;
         s.learnt = ev.learnt;

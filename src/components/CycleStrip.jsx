@@ -5,9 +5,10 @@ import { PauseIcon, SnowIcon } from '../icons.jsx';
 // keeps its layout whatever the state, over the picture. The sentence for each state is a tooltip and is read out by a screen reader.
 const STEPS = ['drive', 'back', 'learn'];
 
-export default function CycleStrip({ t, state, learnt, hits, lessons }) {
+export default function CycleStrip({ t, state, learning = true, learnt, hits, lessons }) {
   const active = STEPS.includes(state) ? state : null;
-  const text = t.cycle[`${state}Text`];
+  const frozen = !learning && (state === 'freeze' || state === 'pause');       // (a pause keeps the robot frozen)
+  const text = state === 'pause' && frozen ? `${t.cycle.pauseText} ${t.brain.statusOff}` : t.cycle[`${state}Text`];
   return (
     <div className="cycle-bar" aria-label={t.cycle.title}>
       <ol className="steps" title={text}>
@@ -18,7 +19,7 @@ export default function CycleStrip({ t, state, learnt, hits, lessons }) {
             {i < STEPS.length - 1 && <span className="arrow" aria-hidden="true">›</span>}
           </li>
         ))}
-        {state === 'freeze' && <li className="step freeze on"><SnowIcon size={15} />{t.cycle.freeze}</li>}
+        {frozen && <li className="step freeze on"><SnowIcon size={15} />{t.cycle.freeze}</li>}
         {state === 'pause' && <li className="step pause on"><PauseIcon size={15} />{t.cycle.pause}</li>}
       </ol>
       <span className="sr-only" role="status">{text}</span>

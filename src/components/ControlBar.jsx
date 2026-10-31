@@ -10,15 +10,15 @@ import { BrainIcon, CheckIcon, EraserIcon, PauseIcon, PlayIcon, WarnIcon } from 
 // (how fast it learns, how fast it forgets). The speed of the robot is not here: it is the weight of the constant input "1" in the
 // picture. On a wide screen the bar is part of the top bar; on a narrow one it is a page of its own (`inPage`, with the hints).
 // Every change is told to the robot (or the virtual one) as it is made.
-export default function ControlBar({ t, state, params, enabled, live, onChange, onPreset, inPage = false }) {
+export default function ControlBar({ t, state, learning, params, enabled, live, onChange, onPreset, inPage = false }) {
   const [step, holdStep] = useHeld(params.step);
   const [forget, holdForget] = useHeld(params.forget);
   const [menu, setMenu] = useState(false);
   const box = useRef(null);
-  const frozen = state === 'freeze';
+  const frozen = !learning;                 // (learning does not depend on the pause: a frozen robot stays frozen through it)
   const paused = state === 'pause';
   const set = (key, hold) => (v) => { hold(v); onChange({ [key]: v }); };
-  const status = !enabled ? t.brain.offline : frozen ? t.brain.statusOff : paused ? t.brain.statusPaused : t.brain.statusOn;
+  const status = !enabled ? t.brain.offline : paused ? (frozen ? t.brain.statusPausedOff : t.brain.statusPaused) : frozen ? t.brain.statusOff : t.brain.statusOn;
 
   useEffect(() => {
     if (!menu) return undefined;

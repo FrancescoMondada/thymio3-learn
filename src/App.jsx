@@ -5,6 +5,7 @@ import ControlBar from './components/ControlBar.jsx';
 import Timeline from './components/Timeline.jsx';
 import Arena from './components/Arena.jsx';
 import LinkInfo from './components/LinkInfo.jsx';
+import LearningRule from './components/LearningRule.jsx';
 import Settings from './components/Settings.jsx';
 import Help from './components/Help.jsx';
 import { BluetoothIcon, HelpIcon, WarnIcon } from './icons.jsx';
@@ -179,7 +180,7 @@ export default function App() {
       if (e.key === 'd' || e.key === 'D') { setSettings((v) => !v); return; }
       if (!ok) return;
       if (e.key === ' ') { e.preventDefault(); go({ command: s.state === 'pause' ? CMD.RESUME : CMD.PAUSE }); }
-      else if (e.key === 'g' || e.key === 'G') go({ command: s.state === 'freeze' ? CMD.LEARN : CMD.FREEZE });
+      else if (e.key === 'g' || e.key === 'G') go({ command: s.learning ? CMD.FREEZE : CMD.LEARN });
       else if (e.key === '0') go({ command: CMD.RESET });
     };
     window.addEventListener('keydown', on);
@@ -226,7 +227,7 @@ export default function App() {
             <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label={t.head.help} title={t.head.help}><HelpIcon /></button>
           </div>
         </header>
-        {wide && <ControlBar t={t} state={snap.state} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} />}
+        {wide && <ControlBar t={t} state={snap.state} learning={snap.learning} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} />}
       </div>
 
       {(lost || modeEnded || notice || snap.error || starting || snap.live.giveUp) && (
@@ -249,7 +250,7 @@ export default function App() {
                 <h2>{t.net.title}</h2>
                 <p className="muted small">{t.net.subtitle}</p>
               </div>
-              <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} />
+              <CycleStrip t={t} state={snap.running ? snap.state : 'pause'} learning={!snap.running || snap.learning} learnt={snap.learnt} hits={snap.hits} lessons={snap.lessons} />
             </header>
             <div ref={netRef} className="net-wrap">
               <Network
@@ -264,15 +265,12 @@ export default function App() {
               <li><svg width="34" height="22" aria-hidden="true" className="l-base"><rect x="3" y="2" width="28" height="18" rx="9" /><text x="17" y="12" textAnchor="middle" dominantBaseline="central">1</text></svg>{t.net.legendBase}</li>
             </ul>
             <p className="muted small formula">{t.net.formula} {t.net.pick}</p>
-            <details className="rule">
-              <summary>{t.cycle.rule}</summary>
-              <p>{t.cycle.ruleText}</p>
-            </details>
+            <LearningRule t={t} step={snap.params.step} forget={snap.params.forget} />
           </section>
 
           {!wide && (
             <div data-tab="settings">
-              <ControlBar t={t} state={snap.state} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} inPage />
+              <ControlBar t={t} state={snap.state} learning={snap.learning} params={snap.params} enabled={enabled} live={snap.live} onChange={send} onPreset={applyPreset} inPage />
             </div>
           )}
 

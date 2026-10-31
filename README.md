@@ -93,8 +93,12 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
   « Réglages » / « Controls ».
 - **Au-dessus de l'image**, à droite du titre: le cycle du robot (avance → choc, recule → apprend, avec une marque sur l'étape en
   cours) et les leçons retenues (les 16 LED Lego du robot). La phrase qui explique l'étape est l'infobulle du cycle, celle des chocs et
-  des leçons faites celle des leçons. **Sous l'image**: la légende et, dépliable, la règle d'apprentissage. Il n'y a plus de barre
-  sous l'image.
+  des leçons faites celle des leçons. **Sous l'image**: la légende et, dépliable, la règle d'apprentissage telle que le mode l'applique
+  (le choc: un des 5 capteurs de devant dépasse 3300 → il recule 1 s; la leçon: un pas sur les poids des capteurs qui ont touché,
+  tableau capteur par capteur, la moitié d'un pas pour le capteur de devant; l'oubli: chaque poids se rapproche de 0 de 1; ce qui ne
+  change jamais; gelé = chocs ignorés). Le pas et le délai d'oubli affichés sont ceux des curseurs. Il n'y a plus de barre
+  sous l'image. **L'interrupteur « Apprentissage » ne dépend pas de la pause**: un robot gelé reste gelé pendant la pause (et après),
+  et on peut l'activer ou le geler pendant la pause.
 - **Les signaux au fil du temps** (la carte se replie sur son titre; **fermée au départ**, le choix est gardé): une pile de graphiques qui ont **le même axe du temps et les mêmes marges**, donc alignés de haut
   en bas (ce qui se passe au même instant est sur la même verticale): les lectures des capteurs (avec le seuil de choc), les poids
   vers la roue gauche, les poids vers la roue droite, la vitesse des roues. Chaque graphique se cache avec son œil, et on choisit les
@@ -125,7 +129,7 @@ toutes les 20 ms et qui écrit les LED du corps; MicroPython **relit** ces LED (
   un démarrage est ensuite un script de deux lignes, `import ann_x; ann_x.run(30, 667, 16, "")`, dont les arguments portent le
   pas, la vitesse, l'oubli et les 14 poids de départ. Sans module, le mode entier est envoyé.
 - **Robot → page** (`parseRobotLine` dans `src/protocol.js`):
-  `@@n état p0..p6 gauche droite leçons` toutes les 100 ms; `@@w` (14 poids, en dixièmes) à chaque changement et toutes les 3 s;
+  `@@n état p0..p6 gauche droite leçons apprend` toutes les 100 ms (`apprend` vaut 1, ou 0 quand l'apprentissage est gelé, y compris pendant une pause); `@@w` (14 poids, en dixièmes) à chaque changement et toutes les 3 s;
   `@@p pas vitesseG vitesseD oubli` (vitesse de chaque roue sans obstacle); `@@hit masque` (quels capteurs ont touché); `@@learn n`; `@@forget n`; `@@ack n`; `@@state`, `@@exit`, `@@bye`.
 - **Page → robot**: un message est une suite d'objets (clé + valeur de 12 bits: un poids en dixièmes, le pas, la vitesse de base de chaque roue (clés 14 et 15, en dixièmes),
   l'oubli, une commande: tout oublier / pause / reprendre / geler / apprendre / quitter), écrite dans les LED en 1 à 8 trames de douze valeurs de 4 bits

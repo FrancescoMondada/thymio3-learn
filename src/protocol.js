@@ -19,7 +19,7 @@ const ints = (a, n) => a.slice(0, n).map(Number);
 const finite = (a) => a.every(Number.isFinite);
 
 // One line of stdout -> an event, or null for anything else (print() of other scripts, noise).
-//   @@n state p0..p6 left right learnt   every 100 ms
+//   @@n state p0..p6 left right learnt learning   every 100 ms; learning is 1 when the robot learns, 0 when it is frozen (also while paused)
 //   @@w l0..l6 r0..r6                    the weights, in tenths, when they change (and every 3 s)
 //   @@p step baseL baseR forget          the settings: learning step and the speed of each wheel with nothing in front, in tenths; forgetting in seconds
 //   @@hit mask                           a collision: bit i = sensor i was over the threshold
@@ -38,9 +38,11 @@ export function parseRobotLine(line) {
     case 'bat': { const v = Number(a[0]); return { type: 'battery', volts: v > 100 ? v / 1000 : v }; }
     case 'state': return Object.values(STATES).includes(a[0]) ? { type: 'state', state: a[0] } : null;
     case 'n': {
-      const v = ints(a, 11);
+      const v = ints(a, 12);
       if (v.length < 11 || !finite(v)) return null;
-      return { type: 'n', state: STATES[v[0]] || 'drive', prox: v.slice(1, 8), motors: [v[8], v[9]], learnt: v[10] };
+      const state = STATES[v[0]] || 'drive';
+      // (a mode that does not say it: learning is off in the freeze state)
+      return { type: 'n', state, prox: v.slice(1, 8), motors: [v[8], v[9]], learnt: v[10], learning: v.length > 11 ? v[11] !== 0 : state !== 'freeze' };
     }
     case 'w': {
       const v = ints(a, 14);

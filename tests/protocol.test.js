@@ -14,7 +14,11 @@ import { minify, hash32, moduleNameFor, buildModuleFrom } from '../src/script-co
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 test('the lines of the robot become events', () => {
-  assert.deepEqual(parseRobotLine('@@n 0 0 0 3400 0 0 0 0 66 -66 5'), { type: 'n', state: 'drive', prox: [0, 0, 3400, 0, 0, 0, 0], motors: [66, -66], learnt: 5 });
+  assert.deepEqual(parseRobotLine('@@n 0 0 0 3400 0 0 0 0 66 -66 5'), { type: 'n', state: 'drive', prox: [0, 0, 3400, 0, 0, 0, 0], motors: [66, -66], learnt: 5, learning: true });
+  // the last number says if it learns: a pause keeps the robot frozen, and a mode that does not say it is read from the state
+  assert.equal(parseRobotLine('@@n 5 0 0 0 0 0 0 0 0 0 5 0').learning, false);
+  assert.equal(parseRobotLine('@@n 5 0 0 0 0 0 0 0 0 0 5 1').learning, true);
+  assert.equal(parseRobotLine('@@n 4 0 0 0 0 0 0 0 0 0 5').learning, false);
   assert.deepEqual(parseRobotLine('@@n 1 4095 0 0 0 0 0 0 -200 -200 16').state, 'back');
   assert.equal(parseRobotLine('@@n 5 0 0 0 0 0 0 0 0 0 0').state, 'pause');
   const w = parseRobotLine('@@w 30 -30 0 0 0 0 5 -30 30 0 0 0 0 -15');

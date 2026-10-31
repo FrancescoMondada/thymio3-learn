@@ -240,6 +240,30 @@ class Interface(unittest.TestCase):
         paused = [(t, l, rr) for t, l, rr in r.speeds if 12 <= t <= 28]
         self.assertTrue(all(l == 0 and rr == 0 for _, l, rr in paused))
 
+    def test_the_n_line_says_if_it_learns_even_through_a_pause(self):
+        # the last number of @@n: 1 learns, 0 frozen. A pause does not change it (the resume goes back to it), and learning can be
+        # turned on or off during the pause.
+        r = VirtualRobot()
+        self.feed(r, {
+            10: encode([(KEY_CMD, CMD_FREEZE)], 1),
+            40: encode([(KEY_CMD, CMD_PAUSE)], 2),
+            70: encode([(KEY_CMD, CMD_RESUME)], 3),
+            100: encode([(KEY_CMD, CMD_PAUSE)], 4),
+            130: encode([(KEY_CMD, CMD_LEARN)], 5),
+            160: encode([(KEY_CMD, CMD_RESUME)], 6),
+        })
+        run(r, 200)
+        ns = [(t, ln.split()) for t, ln in r.lines if ln.startswith("@@n ")]
+        for name, t0, t1, state, learns in [
+            ("drive", 0, 10, "0", "1"), ("frozen", 20, 40, "4", "0"), ("paused out of the freeze", 50, 70, "5", "0"),
+            ("frozen again", 80, 100, "4", "0"), ("paused, still frozen", 110, 130, "5", "0"),
+            ("paused, learning back on", 140, 160, "5", "1"), ("driving and learning", 170, 200, "0", "1"),
+        ]:
+            seen = [w for t, w in ns if t0 <= t < t1]
+            self.assertTrue(seen, name)
+            for w in seen:
+                self.assertEqual((w[1], w[-1]), (state, learns), name)
+
     def test_frozen_robot_does_not_learn(self):
         r = VirtualRobot()
         seq = {5: encode([(KEY_CMD, CMD_FREEZE)], 1)}
@@ -289,7 +313,7 @@ class Interface(unittest.TestCase):
         self.assertEqual(words[:5], ["@@hello", "@@bat", "@@state", "@@w", "@@p"])
         n = [ln for _, ln in r.lines if ln.startswith("@@n ")]
         self.assertEqual(len(n), 80)                                  # one every 100 ms
-        self.assertEqual(n[0], "@@n 0 0 0 0 0 0 0 0 66 66 0")
+        self.assertEqual(n[0], "@@n 0 0 0 0 0 0 0 0 66 66 0 1")
         # the weights and the settings are said again every 3 s (150 ticks)
         self.assertGreaterEqual(len([w for w in words if w == "@@w"]), 3)
         # every line is padded to 100 bytes, so that the firmware sends it at once

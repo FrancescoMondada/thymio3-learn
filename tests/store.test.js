@@ -17,10 +17,22 @@ test('the readings, the weights and the settings are what the robot said last', 
   await flush();
   const s = tele.getSnapshot();
   assert.equal(s.running, true);
+  assert.equal(s.learning, true);
   assert.deepEqual(s.prox, [1, 2, 3, 4, 5, 6, 7]);
   assert.deepEqual(s.params, { step: 3, baseLeft: 66.7, baseRight: 66.7, forget: 16 });
   assert.equal(s.t, 120);
   assert.equal(published, 1, 'one snapshot for a burst of events');
+});
+
+test('a pause does not change whether the robot learns', async () => {
+  const tele = new Telemetry();
+  const n = (state, learning) => ({ type: 'n', state, learning, prox: new Array(7).fill(0), motors: [0, 0], learnt: 0, t: 1 });
+  const after = async (ev) => { tele.push(ev); await flush(); return tele.getSnapshot(); };
+  assert.equal((await after(n('freeze', false))).learning, false);
+  const paused = await after(n('pause', false));
+  assert.equal(paused.state, 'pause');
+  assert.equal(paused.learning, false);
+  assert.equal((await after(n('pause', true))).learning, true);
 });
 
 test('a weight is in the history when it changes, not when it is said again', () => {

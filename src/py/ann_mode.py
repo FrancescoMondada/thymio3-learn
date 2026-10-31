@@ -32,7 +32,7 @@
 # moment, see rx_poll) and limited to +-500.
 #
 # The interface and the robot talk through stdout and the four body LEDs:
-#   robot -> interface  "@@word ..." lines, see say(). Every 100 ms: @@n state p0..p6 left right learnt.
+#   robot -> interface  "@@word ..." lines, see say(). Every 100 ms: @@n state p0..p6 left right learnt learning (1 = learns, 0 = frozen, also while paused).
 #                       When something changes (and every 3 s): @@w wl0..wl6 wr0..wr6 (tenths),
 #                       @@p step baseLeft baseRight forgetSeconds (tenths, tenths, tenths, s).
 #   interface -> robot  rx_poll() below.
@@ -396,8 +396,12 @@ class Brain:
             self.timer = 0
             self.set_state(ST_FREEZE if self.prev_state == ST_FREEZE else ST_DRIVE)
 
+    def is_frozen(self):
+        # learning is off: in the freeze state, or paused out of it (the resume goes back to it)
+        return self.state == ST_FREEZE or (self.state == ST_PAUSE and self.prev_state == ST_FREEZE)
+
     def toggle_freeze(self):
-        if self.state == ST_FREEZE or (self.state == ST_PAUSE and self.prev_state == ST_FREEZE):
+        if self.is_frozen():
             self.command(CMD_LEARN)
             self.resume()
         else:
@@ -483,7 +487,7 @@ class Brain:
         if self.state == ST_PAUSE:
             self.forget_timer = 0
             self.stop()
-        say("n", self.state, *self.p + [self.ml, self.mr, self.learnt])
+        say("n", self.state, *self.p + [self.ml, self.mr, self.learnt, 0 if self.is_frozen() else 1])
 
     def tick(self):
         status = btn.get_status()   # [BACKWARD, LEFT, CENTER, FORWARD, RIGHT]

@@ -214,9 +214,13 @@ export class AnnMode {
     }
   }
 
+  // learning is off: in the freeze state, or paused out of it (the resume goes back to it)
+  isFrozen() {
+    return this.state === ST.FREEZE || (this.state === ST.PAUSE && this.prevState === ST.FREEZE);
+  }
+
   toggleFreeze() {
-    const frozen = this.state === ST.FREEZE || (this.state === ST.PAUSE && this.prevState === ST.FREEZE);
-    this.command(frozen ? CMD.LEARN : CMD.FREEZE);
+    this.command(this.isFrozen() ? CMD.LEARN : CMD.FREEZE);
     this.resume();
   }
 
@@ -291,7 +295,7 @@ export class AnnMode {
       this.forgetTimer = 0;
       this.stop();
     }
-    this.say('n', this.state, ...this.p, this.ml, this.mr, this.learnt);
+    this.say('n', this.state, ...this.p, this.ml, this.mr, this.learnt, this.isFrozen() ? 0 : 1);
   }
 
   // What the mode says when it starts (run() in the Python): hello, battery, state, weights, settings.
