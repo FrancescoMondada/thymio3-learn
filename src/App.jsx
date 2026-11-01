@@ -171,7 +171,7 @@ export default function App() {
 
   // ---- the QR code of the configuration: what it shows, and what a scanned one sets up (share.js) -------------------
   const showQr = () => setQr({
-    show: encodeConfig({ lang, ...snap.params, weights: snap.weights }),
+    show: encodeConfig({ lang, showName, ...snap.params, weights: snap.weights }),
     caption: { name: showName ? name.trim() : '', when: formatWhen(new Date(), lang) },
   });
   const scanQr = () => setQr({ scan: true });
@@ -180,6 +180,7 @@ export default function App() {
     const cfg = decodeConfig(text);
     if (!cfg) return false;
     if (cfg.lang) setLang(cfg.lang);
+    if (cfg.showName !== undefined) chooseShowName(cfg.showName);
     const change = configChange(cfg);
     if (Object.keys(change).length) send(change);
     setTimeout(() => setQr(null), 700);                           // the frame goes green for a moment

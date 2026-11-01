@@ -120,12 +120,12 @@ Deux boutons en haut à droite, à côté de l'aide (trois boutons carrés de m�
 QR de la configuration actuelle, **le bouton bleu** scanne le code d'un autre appareil (caméra derrière un viseur, ou une photo du code si la caméra
 est refusée ou absente) et applique tout d'un coup. Le bouton bleu est grisé tant que le mode ne tourne pas (robot en cours de connexion).
 
-- **Ce que contient le code** (`src/share.js`, texte `T3L1;l=fr;s=30;b=670,670;f=16;w=90,60,0,…`, une centaine de caractères, un code de 37 modules,
-  facile à scanner à travers une salle): la langue, la vitesse d'apprentissage, les deux vitesses de base (celles de l'entrée « 1 »), le délai
-  d'oubli et **les 14 poids**. Les nombres sont ceux du protocole avec le robot (dixièmes). Un enseignant règle un cerveau, l'affiche, les élèves le
+- **Ce que contient le code** (`src/share.js`, texte `T3L1;l=fr;n=0;s=30;b=670,670;f=16;w=90,60,0,…`, une centaine de caractères, un code de 37 modules,
+  facile à scanner à travers une salle): la langue, **l'affichage ou non du pseudo** (le réglage « Afficher le pseudo », champ `n`; le pseudo lui-même reste sur son appareil), la vitesse
+  d'apprentissage, les deux vitesses de base (celles de l'entrée « 1 »), le délai d'oubli et **les 14 poids**. Les nombres sont ceux du protocole avec le robot (dixièmes). Un enseignant règle un cerveau, l'affiche, les élèves le
   scannent; un élève peut aussi montrer le cerveau que son robot a appris, et l'enseignant le photographie.
 - **Lecture stricte**: ce qui vient d'un scan est une donnée, jamais exécutée. Un champ invalide est ignoré, un champ absent laisse cette partie de la
-  page telle quelle, un code d'une autre application (celui des cartes est `T3C1`) est refusé avec un message. Le thème, l'état gelé ou en pause
+  page telle quelle, un code d'une autre application (celui des cartes est `T3C1`) est refusé avec un message. Le thème, le pseudo lui-même, l'état gelé ou en pause
   et l'arène ne voyagent pas.
 - **Le pseudo sous le code** (`src/names.js`): avec la date et l'heure, écrit en grand sous le code pour reconnaître sur une photo l'appareil dont il vient.
   Chaque appareil en tire un au hasard au premier lancement, **dans le style des pseudos de jeux en ligne** pour des 12 à 14 ans: un mot de science ou de

@@ -1,8 +1,9 @@
 // The configuration of the page as a short text, for a QR code, and back. A teacher shows the code, the students scan it and
-// end up with the same settings and the same weights: the language, the learning step, the speed of each wheel with nothing in
-// front, the forgetting delay and the 14 weights of the network.
+// end up with the same settings and the same weights: the language, whether the pseudonym is written under the QR code (the
+// pseudonym itself stays on its device), the learning step, the speed of each wheel with nothing in front, the forgetting delay and
+// the 14 weights of the network.
 //
-//   T3L1;l=fr;s=30;b=670,670;f=16;w=0,0,0,0,0,0,0,0,0,0,0,0,0,0
+//   T3L1;l=fr;n=0;s=30;b=670,670;f=16;w=0,0,0,0,0,0,0,0,0,0,0,0,0,0
 //
 // The first word names the format and its version (the cards application writes T3C1: its codes are not ours). A field is
 // `letter=value`; the order does not matter, a field that is missing leaves that part of the page as it is, and a field that is
@@ -38,11 +39,12 @@ const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const tenths = (v, lo, hi) => clamp(Math.round((Number(v) || 0) * 10), lo, hi);
 const isSeven = (a) => Array.isArray(a) && a.length === 7;
 
-// What the page holds -> the text. `c`: { lang, step, baseLeft, baseRight, forget, weights: { left: [7], right: [7] } }; a part that is
-// missing is left out of the code.
+// What the page holds -> the text. `c`: { lang, showName, step, baseLeft, baseRight, forget, weights: { left: [7], right: [7] } }; a part
+// that is missing is left out of the code.
 export function encodeConfig(c) {
   const out = [PREFIX];
   if (LANGS.some((l) => l.id === c.lang)) out.push(`l=${c.lang}`);
+  if (typeof c.showName === 'boolean') out.push(`n=${c.showName ? 1 : 0}`);
   if (c.step != null) out.push(`s=${tenths(c.step, 0, STEP_MAX)}`);
   if (c.baseLeft != null && c.baseRight != null) out.push(`b=${tenths(c.baseLeft, 0, BASE_MAX)},${tenths(c.baseRight, 0, BASE_MAX)}`);
   if (c.forget != null) out.push(`f=${clamp(Math.round(Number(c.forget) || 0), 0, FORGET_MAX)}`);
@@ -63,6 +65,7 @@ export function decodeConfig(text) {
     const key = field.slice(0, i), v = field.slice(i + 1);
     switch (key) {
       case 'l': if (LANGS.some((l) => l.id === v)) out.lang = v; break;
+      case 'n': if (v === '0' || v === '1') out.showName = v === '1'; break;
       case 's': { const n = int(v); if (within(n, 0, STEP_MAX)) out.step = n / 10; break; }
       case 'b': {
         const [l, r, ...rest] = v.split(',').map(int);
@@ -81,7 +84,8 @@ export function decodeConfig(text) {
   return Object.keys(out).length ? out : null;
 }
 
-// What to ask of the robot (or the virtual one) for a decoded configuration: the same change as the sliders and the chips make.
+// What to ask of the robot (or the virtual one) for a decoded configuration: the same change as the sliders and the chips make (the
+// language and the pseudonym flag are the page's own business, not the robot's).
 export function configChange(cfg) {
   const change = {};
   for (const k of ['step', 'baseLeft', 'baseRight', 'forget']) if (cfg[k] != null) change[k] = cfg[k];

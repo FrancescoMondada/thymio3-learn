@@ -13,6 +13,20 @@ test('a configuration is a short text of the numbers of the protocol (tenths)', 
   assert.equal(encodeConfig(sample), `${PREFIX};l=fr;s=30;b=670,670;f=16;w=90,60,0,-60,-90,0,0,-90,-60,0,60,90,0,0`);
 });
 
+test('whether the pseudonym is shown travels in the code, the pseudonym itself does not', () => {
+  assert.equal(encodeConfig({ lang: 'fr', showName: false }), `${PREFIX};l=fr;n=0`);
+  assert.equal(encodeConfig({ showName: true }), `${PREFIX};n=1`);
+  assert.equal(encodeConfig({ lang: 'fr' }), `${PREFIX};l=fr`, 'a page that does not say it leaves it out');
+  assert.equal(encodeConfig({ showName: 'yes', name: 'NeonFalcon42' }), PREFIX, 'only a yes or a no, and nothing else about the name');
+  assert.deepEqual(decodeConfig(`${PREFIX};n=1`), { showName: true });
+  assert.deepEqual(decodeConfig(`${PREFIX};n=0;s=30`), { showName: false, step: 3 });
+  assert.deepEqual(decodeConfig(`${PREFIX};n=2;s=30`), { step: 3 }, 'anything but 0 and 1 is dropped');
+  assert.deepEqual(decodeConfig(`${PREFIX};n=NeonFalcon42`), null);
+  assert.deepEqual(decodeConfig(encodeConfig({ ...sample, showName: true })), { ...sample, showName: true });
+  assert.deepEqual(decodeConfig(encodeConfig({ ...sample, showName: false })), { ...sample, showName: false });
+  assert.deepEqual(configChange({ showName: true, lang: 'fr' }), {}, 'it is the page\'s own business, not the robot\'s');
+});
+
 test('what a code holds comes back the same, in the units of the page', () => {
   assert.deepEqual(decodeConfig(encodeConfig(sample)), sample);
   const odd = { lang: 'de', step: 0.5, baseLeft: 66.7, baseRight: 72.3, forget: 0, weights: brain([0.5, -4.5, 100, -100, 0, 33.3, -0.1], [1, 2, 3, 4, 5, 6, 7]) };
