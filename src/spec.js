@@ -65,7 +65,8 @@ export const PRESETS = [
   // a brain that avoids obstacles, as a teacher would draw it: the outer sensors (left, right) ask for a slight turn (+-5), the ones in
   // between (front left, front right) for a stronger one (+-10), and the middle one brakes hard, on both wheels (-15 and -15).
   // Obstacle on the left: the left wheel speeds up, the right one slows down, the robot turns right; on the right, the opposite.
-  { id: 'avoid', left: [5, 10, -15, -10, -5, 0, 0], right: [-5, -10, -15, 10, 5, 0, 0] },
+  // The back sensors push the robot on: +20 towards the wheel on their own side and +5 towards the other one.
+  { id: 'avoid', left: [5, 10, -15, -10, -5, 20, 5], right: [-5, -10, -15, 10, 5, 5, 20] },
   // the opposite: the robot is drawn to what it sees
   { id: 'attract', left: [-9, -6, 0, 6, 9, 0, 0], right: [9, 6, 0, -6, -9, 0, 0] },
   // a robot that slows down in front of anything

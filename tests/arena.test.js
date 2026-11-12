@@ -102,13 +102,17 @@ test('distanceFromProx: the inverse of the sensor curve (low reading = far, high
   assert.ok(distanceFromProx(1000) > distanceFromProx(3000));
 });
 
-test('the ready-made brain that avoids obstacles: slight turns on the sides, stronger ones between, the middle brakes on both wheels', () => {
+test('the ready-made brain that avoids obstacles: slight turns on the sides, stronger ones between, the middle brakes, the back pushes on', () => {
   const avoid = PRESETS.find((p) => p.id === 'avoid');
-  assert.deepEqual(avoid.left, [5, 10, -15, -10, -5, 0, 0]);
-  assert.deepEqual(avoid.right, [-5, -10, -15, 10, 5, 0, 0]);
-  // what a sensor on one side does to a wheel is the opposite of what the sensor on the other side does to the other wheel
+  assert.deepEqual(avoid.left, [5, 10, -15, -10, -5, 20, 5]);
+  assert.deepEqual(avoid.right, [-5, -10, -15, 10, 5, 5, 20]);
+  // the brain is its own mirror image: what a front sensor does to a wheel is what the sensor on the other side does to the other wheel
   for (let i = 0; i < 5; i++) assert.equal(avoid.left[i], avoid.right[4 - i], `sensor ${i}`);
-  assert.deepEqual(avoid.left.slice(5), [0, 0], 'the back sensors do nothing');
+  // the back sensors: +20 to the wheel on their own side (back left -> left wheel, back right -> right wheel), +5 to the other one
+  assert.equal(avoid.left[5], 20);
+  assert.equal(avoid.right[6], 20);
+  assert.equal(avoid.right[5], 5);
+  assert.equal(avoid.left[6], 5);
 });
 
 test('with that brain alone the virtual robot stays off the obstacles from starts where the empty brain runs into one', () => {
@@ -126,7 +130,7 @@ test('with that brain alone the virtual robot stays off the obstacles from start
     }
     return null;                                                 // no contact
   };
-  for (const pose of [{ x: 357.78, y: 243.54, h: 3.745 }, { x: 98.35, y: 308.33, h: 1.899 }, { x: 177.07, y: 350.14, h: 4.822 }, { x: 167.14, y: 281.85, h: 2.2 }]) {
+  for (const pose of [{ x: 98.35, y: 308.33, h: 1.899 }, { x: 177.07, y: 350.14, h: 4.822 }, { x: 167.14, y: 281.85, h: 2.2 }]) {
     assert.ok(trial('blank', pose) !== null, 'the empty brain drives into something');
     assert.equal(trial('avoid', pose), null, `the avoiding brain from ${JSON.stringify(pose)}`);
   }

@@ -88,7 +88,8 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
   réel: son nom, qui porte le numéro de série, et sa batterie, à côté du bouton);
   la seconde a **les commandes**: l'interrupteur « Apprentissage » (le robot apprend ou non), tout oublier, un menu de quatre cerveaux
   tout faits (vierge; **évite les obstacles**: capteurs latéraux ±5 = léger virage, capteurs avant gauche et avant droit ±10 = virage plus net, capteur
-  central −15 sur les deux roues = freinage fort; attiré; prudent), pause, et les deux curseurs (vitesse d'apprentissage, oubli: jamais
+  central −15 sur les deux roues = freinage fort; capteurs arrière +20 vers la roue de leur côté et +5 vers l'autre = ils poussent le robot en
+  avant; attiré; prudent), pause, et les deux curseurs (vitesse d'apprentissage, oubli: jamais
   ou toutes les n s). Rien n'est enregistré. Rien ne bouge dans la barre quand l'état du robot change: la confirmation « reçu par le
   robot » est une petite coche dans la marge de droite (le texte est son infobulle). Sur un écran étroit les commandes sont l'onglet
   « Réglages » / « Controls ».
