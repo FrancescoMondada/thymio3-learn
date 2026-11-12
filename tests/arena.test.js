@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Arena, proxFromDistance, MM_PER_UNIT, ROBOT_RADIUS } from '../src/sim/arena.js';
 import { VirtualRobot } from '../src/sim/virtual-robot.js';
-import { COLLISION } from '../src/spec.js';
+import { COLLISION, PRESETS } from '../src/spec.js';
+import { CMD } from '../src/protocol.js';
 import { SimBackend } from '../src/sim/sim-backend.js';
 
 const golden = JSON.parse((await import('node:fs')).readFileSync(new URL('./golden-ann.json', import.meta.url), 'utf8'));
@@ -99,4 +100,34 @@ test('distanceFromProx: the inverse of the sensor curve (low reading = far, high
   assert.equal(distanceFromProx(0), 110);
   assert.ok(distanceFromProx(4095) < 6);
   assert.ok(distanceFromProx(1000) > distanceFromProx(3000));
+});
+
+test('the ready-made brain that avoids obstacles: slight turns on the sides, stronger ones between, the middle brakes on both wheels', () => {
+  const avoid = PRESETS.find((p) => p.id === 'avoid');
+  assert.deepEqual(avoid.left, [5, 10, -15, -10, -5, 0, 0]);
+  assert.deepEqual(avoid.right, [-5, -10, -15, 10, 5, 0, 0]);
+  // what a sensor on one side does to a wheel is the opposite of what the sensor on the other side does to the other wheel
+  for (let i = 0; i < 5; i++) assert.equal(avoid.left[i], avoid.right[4 - i], `sensor ${i}`);
+  assert.deepEqual(avoid.left.slice(5), [0, 0], 'the back sensors do nothing');
+});
+
+test('with that brain alone the virtual robot stays off the obstacles from starts where the empty brain runs into one', () => {
+  const trial = (preset, pose, seconds = 40) => {
+    const sim = new SimBackend(() => {});
+    const w = PRESETS.find((p) => p.id === preset);
+    sim.start({ weights: { left: w.left, right: w.right } });
+    sim.apply({ command: CMD.FREEZE });                          // the brain alone: nothing is learnt
+    const arena = sim.robot.arena;
+    arena.pose = { ...pose };
+    arena.bumped = 0;
+    for (let t = 0; t < seconds * 10; t++) {
+      sim.advance(100);
+      if (arena.bumped > 0) return (t + 1) / 10;
+    }
+    return null;                                                 // no contact
+  };
+  for (const pose of [{ x: 357.78, y: 243.54, h: 3.745 }, { x: 98.35, y: 308.33, h: 1.899 }, { x: 177.07, y: 350.14, h: 4.822 }, { x: 167.14, y: 281.85, h: 2.2 }]) {
+    assert.ok(trial('blank', pose) !== null, 'the empty brain drives into something');
+    assert.equal(trial('avoid', pose), null, `the avoiding brain from ${JSON.stringify(pose)}`);
+  }
 });

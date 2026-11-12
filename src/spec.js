@@ -62,8 +62,10 @@ export const emptyWeights = () => ({ left: new Array(7).fill(0), right: new Arra
 // Some brains to start from (weights in the firmware's units). The first is what the robot starts with.
 export const PRESETS = [
   { id: 'blank', left: [0, 0, 0, 0, 0, 0, 0], right: [0, 0, 0, 0, 0, 0, 0] },
-  // what the robot ends up with after a few bumps on each side: obstacle on the left -> turn right
-  { id: 'avoid', left: [9, 6, 0, -6, -9, 0, 0], right: [-9, -6, 0, 6, 9, 0, 0] },
+  // a brain that avoids obstacles, as a teacher would draw it: the outer sensors (left, right) ask for a slight turn (+-5), the ones in
+  // between (front left, front right) for a stronger one (+-10), and the middle one brakes hard, on both wheels (-15 and -15).
+  // Obstacle on the left: the left wheel speeds up, the right one slows down, the robot turns right; on the right, the opposite.
+  { id: 'avoid', left: [5, 10, -15, -10, -5, 0, 0], right: [-5, -10, -15, 10, 5, 0, 0] },
   // the opposite: the robot is drawn to what it sees
   { id: 'attract', left: [-9, -6, 0, 6, 9, 0, 0], right: [9, 6, 0, -6, -9, 0, 0] },
   // a robot that slows down in front of anything
