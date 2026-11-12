@@ -67,8 +67,9 @@ export const PRESETS = [
   // Obstacle on the left: the left wheel speeds up, the right one slows down, the robot turns right; on the right, the opposite.
   // The back sensors push the robot on: +20 towards the wheel on their own side and +5 towards the other one.
   { id: 'avoid', left: [5, 10, -15, -10, -5, 20, 5], right: [-5, -10, -15, 10, 5, 5, 20] },
-  // the opposite: the robot is drawn to what it sees
-  { id: 'attract', left: [-9, -6, 0, 6, 9, 0, 0], right: [9, 6, 0, -6, -9, 0, 0] },
+  // the opposite on the sides: the robot is drawn to what it sees and turns towards it; the middle sensor brakes (-10 on both wheels), so
+  // that it stops in front of the obstacle (a wheel is at 0 when the reading is 67 * 600 / 10 = 4020, a few millimetres from it)
+  { id: 'attract', left: [-9, -6, -10, 6, 9, 0, 0], right: [9, 6, -10, -6, -9, 0, 0] },
   // a robot that slows down in front of anything
   { id: 'cautious', left: [0, -3, -6, -3, 0, 0, 0], right: [0, -3, -6, -3, 0, 0, 0] },
 ];

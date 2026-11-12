@@ -135,3 +135,36 @@ test('with that brain alone the virtual robot stays off the obstacles from start
     assert.equal(trial('avoid', pose), null, `the avoiding brain from ${JSON.stringify(pose)}`);
   }
 });
+
+test('the ready-made brain that is drawn to obstacles turns towards them and its middle sensor brakes on both wheels (-10, -10)', () => {
+  const attract = PRESETS.find((p) => p.id === 'attract');
+  assert.deepEqual(attract.left, [-9, -6, -10, 6, 9, 0, 0]);
+  assert.deepEqual(attract.right, [9, 6, -10, -6, -9, 0, 0]);
+  for (let i = 0; i < 5; i++) assert.equal(attract.left[i], attract.right[4 - i], `sensor ${i}`);
+  // the opposite of the brain that avoids, on the sides
+  const avoid = PRESETS.find((p) => p.id === 'avoid');
+  for (const i of [0, 1, 3, 4]) { assert.equal(Math.sign(attract.left[i]), -Math.sign(avoid.left[i]), `sensor ${i}`); }
+});
+
+test('the brain that is drawn to obstacles stops in front of one, a few millimetres from it, where the one without a braking middle runs into it', () => {
+  const run = (left, right, pose, seconds = 40) => {
+    let last = null;
+    const sim = new SimBackend((ev) => { if (ev.type === 'n') last = ev; });
+    sim.start({ weights: { left, right } });
+    sim.apply({ command: CMD.FREEZE });                          // learning off: with it on, a front reading over 3300 is a hit and the robot backs up first
+    const arena = sim.robot.arena;
+    arena.pose = { ...pose };
+    arena.bumped = 0;
+    for (let t = 0; t < seconds * 10; t++) sim.advance(100);
+    return { touched: arena.bumped > 0, motors: last.motors, front: Math.max(...last.prox.slice(0, 5)) };
+  };
+  const attract = PRESETS.find((p) => p.id === 'attract');
+  for (const pose of [{ x: 98.35, y: 308.33, h: 1.899 }, { x: 167.14, y: 281.85, h: 2.2 }, { x: 283.44, y: 312.08, h: 5.005 }]) {
+    const without = run([-9, -6, 0, 6, 9, 0, 0], [9, 6, 0, -6, -9, 0, 0], pose);
+    assert.equal(without.touched, true, 'without the braking middle sensor it runs into the obstacle');
+    const withIt = run(attract.left, attract.right, pose);
+    assert.equal(withIt.touched, false, `it does not touch from ${JSON.stringify(pose)}`);
+    assert.deepEqual(withIt.motors, [0, 0], 'both wheels stopped');
+    assert.ok(withIt.front > 3900 && withIt.front < 4100, `the front reading is ${withIt.front}`);
+  }
+});

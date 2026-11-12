@@ -89,7 +89,9 @@ donc le **même mode réécrit en MicroPython**, qui tourne sur le robot, condui
   la seconde a **les commandes**: l'interrupteur « Apprentissage » (le robot apprend ou non), tout oublier, un menu de quatre cerveaux
   tout faits (vierge; **évite les obstacles**: capteurs latéraux ±5 = léger virage, capteurs avant gauche et avant droit ±10 = virage plus net, capteur
   central −15 sur les deux roues = freinage fort; capteurs arrière +20 vers la roue de leur côté et +5 vers l'autre = ils poussent le robot en
-  avant; attiré; prudent), pause, et les deux curseurs (vitesse d'apprentissage, oubli: jamais
+  avant; **attiré**: l'inverse sur les côtés, et le capteur central à −10 sur les deux roues, donc il s'arrête devant l'obstacle, à quelques millimètres,
+  **à condition que l'apprentissage soit gelé** (sinon une lecture de plus de 3300 est un choc: il recule et apprend; −13 ou moins l'arrêterait
+  avant ce seuil); prudent), pause, et les deux curseurs (vitesse d'apprentissage, oubli: jamais
   ou toutes les n s). Rien n'est enregistré. Rien ne bouge dans la barre quand l'état du robot change: la confirmation « reçu par le
   robot » est une petite coche dans la marge de droite (le texte est son infobulle). Sur un écran étroit les commandes sont l'onglet
   « Réglages » / « Controls ».
